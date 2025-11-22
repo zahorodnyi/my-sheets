@@ -1,0 +1,54 @@
+using System.Globalization;
+
+namespace MySheets.Core.Models;
+
+public enum CellType {
+    Text,
+    Number,
+    Formula
+}
+
+public class Cell {
+    public int Row { get; }
+    public int Column { get; }
+
+    private string _expression = string.Empty;
+
+    public string Expression {
+        get => _expression;
+        set {
+            _expression = value;
+            DetermineType();
+        }
+    }
+
+    public object? Value { get; set; }
+
+    public CellType Type { get; private set; }
+
+    public Cell(int row, int column) {
+        if (row < 0 || column < 0)
+            throw new ArgumentOutOfRangeException(nameof(row), "Coordinates cannot be negative.");
+
+        Row = row;
+        Column = column;
+        DetermineType();
+    }
+
+    private void DetermineType() {
+        if (string.IsNullOrEmpty(Expression)) {
+            Type = CellType.Text;
+            return;
+        }
+
+        if (Expression.StartsWith('=')) {
+            Type = CellType.Formula;
+        } else if (double.TryParse(Expression, NumberStyles.Any, CultureInfo.InvariantCulture, out double numberResult)) {
+            Type = CellType.Number;
+            Value = numberResult; 
+        } else {
+            Type = CellType.Text;
+            Value = Expression;
+        }
+    }
+}
