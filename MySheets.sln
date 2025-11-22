@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MySheets.Core", "MySheets.Core\MySheets.Core.csproj", "{6DD7130B-4E34-43DE-B1DA-44ED2479DB7D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MySheets.UI", "MySheets.UI\MySheets.UI.csproj", "{12847D4A-F21E-43F1-A9DC-B54A906263DC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MySheets.Tests", "MySheets.Tests\MySheets.Tests.csproj", "{90CFABFD-4A90-4DE9-B6F0-5C689E7EC551}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6DD7130B-4E34-43DE-B1DA-44ED2479DB7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6DD7130B-4E34-43DE-B1DA-44ED2479DB7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6DD7130B-4E34-43DE-B1DA-44ED2479DB7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6DD7130B-4E34-43DE-B1DA-44ED2479DB7D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12847D4A-F21E-43F1-A9DC-B54A906263DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12847D4A-F21E-43F1-A9DC-B54A906263DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12847D4A-F21E-43F1-A9DC-B54A906263DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12847D4A-F21E-43F1-A9DC-B54A906263DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90CFABFD-4A90-4DE9-B6F0-5C689E7EC551}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90CFABFD-4A90-4DE9-B6F0-5C689E7EC551}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90CFABFD-4A90-4DE9-B6F0-5C689E7EC551}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90CFABFD-4A90-4DE9-B6F0-5C689E7EC551}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
