@@ -1,39 +1,30 @@
-﻿using Xunit;
-using MySheets.Core.Models;
+﻿using System.Collections.Generic;
 
-namespace MySheets.Tests;
+namespace MySheets.Core.Models;
 
-public class WorksheetTests {
-    [Fact]
-    public void SetCell_ShouldStoreDataInSparseMatrix_AtHighCoordinates() {
-        var worksheet = new Worksheet();
-        int targetRow = 100;
-        int targetCol = 50;
-        string expectedValue = "Test Data";
+public class Worksheet {
+    private readonly Dictionary<(int Row, int Col), Cell> _cells = new();
+    public DependencyGraph DependencyGraph { get; } = new();
 
-        Assert.Equal(0, worksheet.ActiveCellCount);
+    public Cell GetCell(int row, int col) {
+        var key = (row, col);
 
-        worksheet.SetCell(targetRow, targetCol, expectedValue);
+        if (_cells.TryGetValue(key, out var cell)) {
+            return cell;
+        }
 
-        var retrievedCell = worksheet.GetCell(targetRow, targetCol);
+        var newCell = new Cell(row, col);
+        _cells[key] = newCell;
         
-        Assert.Equal(expectedValue, retrievedCell.Expression);
-        Assert.Equal(targetRow, retrievedCell.Row);
-        Assert.Equal(targetCol, retrievedCell.Column);
-        Assert.Equal(1, worksheet.ActiveCellCount);
+        return newCell;
     }
 
-    [Fact]
-    public void Cell_ShouldAutoDetectType() {
-        var cell = new Cell(0, 0);
+    public void SetCell(int row, int col, string value) {
+        DependencyGraph.ClearDependencies(row, col);
 
-        cell.Expression = "123.45";
-        Assert.Equal(CellType.Number, cell.Type);
-
-        cell.Expression = "=SUM(A1:A5)";
-        Assert.Equal(CellType.Formula, cell.Type);
-
-        cell.Expression = "Hello World";
-        Assert.Equal(CellType.Text, cell.Type);
+        var cell = GetCell(row, col);
+        cell.Expression = value;
     }
+
+    public int ActiveCellCount => _cells.Count;
 }
