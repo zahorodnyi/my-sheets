@@ -2,9 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:MySheets.UI.ViewModels"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="MySheets.UI.Views.MainWindow"
-        xmlns:vm="using:MySheets.UI.ViewModels"
         x:DataType="vm:MainWindowViewModel"
         Title="MySheets.UI">
 
@@ -12,46 +12,93 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <ScrollViewer>
-        <ItemsControl ItemsSource="{Binding Rows}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:RowViewModel">
-                    
-                    <Grid ColumnDefinitions="40,*">
-                        
-                        <Border Grid.Column="0" 
-                                Background="#E0E0E0"
-                                BorderBrush="#C0C0C0"
-                                BorderThickness="0 0 1 1">
-                            <TextBlock Text="{Binding Cells[0].Row}" 
-                                       HorizontalAlignment="Center" 
-                                       VerticalAlignment="Center" 
-                                       Margin="2" />
-                        </Border>
+    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <Grid>
+            <Grid.Background>
+                <VisualBrush TileMode="Tile" 
+                             DestinationRect="40,0,120,25" 
+                             SourceRect="0,0,120,25" 
+                             Stretch="None">
+                    <VisualBrush.Visual>
+                        <Border Width="120" Height="25" 
+                                BorderBrush="#C0C0C0" 
+                                BorderThickness="0,0,1,1" 
+                                Background="White"/>
+                    </VisualBrush.Visual>
+                </VisualBrush>
+            </Grid.Background>
 
-                        <ItemsControl Grid.Column="1" ItemsSource="{Binding Cells}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:CellViewModel">
-                                    <Border BorderBrush="#C0C0C0" 
-                                            BorderThickness="0 0 1 1" 
-                                            Width="120" 
-                                            Height="25">
-                                        <TextBox Text="{Binding Expression}" 
-                                                 ToolTip.Tip="{Binding Value}" 
-                                                 AcceptsReturn="False" 
-                                                 Padding="2" />
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
+            <Grid Width="40" 
+                  HorizontalAlignment="Left" 
+                  VerticalAlignment="Stretch" 
+                  ZIndex="0">
+                <Grid.Background>
+                    <VisualBrush TileMode="Tile" 
+                                 DestinationRect="0,0,40,25" 
+                                 SourceRect="0,0,40,25" 
+                                 Stretch="None">
+                        <VisualBrush.Visual>
+                            <Border Width="40" Height="25" 
+                                    BorderBrush="#C0C0C0" 
+                                    BorderThickness="0,0,1,1" 
+                                    Background="#E0E0E0"/>
+                        </VisualBrush.Visual>
+                    </VisualBrush>
+                </Grid.Background>
+            </Grid>
+
+            <Grid MinWidth="2000" MinHeight="2000">
+                <ItemsControl ItemsSource="{Binding Rows}" VerticalAlignment="Top" HorizontalAlignment="Left">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RowViewModel">
+                            <Grid ColumnDefinitions="40,Auto">
+                                <Border Grid.Column="0"
+                                        Width="40"
+                                        Height="25"
+                                        Background="#E0E0E0"
+                                        BorderBrush="#C0C0C0"
+                                        BorderThickness="0,0,1,1">
+                                    <TextBlock Text="{Binding Cells[0].Row}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="12"/>
+                                </Border>
+
+                                <ItemsControl Grid.Column="1" ItemsSource="{Binding Cells}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:CellViewModel">
+                                            <Border BorderBrush="#C0C0C0"
+                                                    BorderThickness="0,0,1,1"
+                                                    Width="120"
+                                                    Height="25"
+                                                    Background="White">
+                                                <TextBox Text="{Binding Expression}"
+                                                         ToolTip.Tip="{Binding Value}"
+                                                         AcceptsReturn="False"
+                                                         Padding="4,2"
+                                                         Background="Transparent"
+                                                         BorderThickness="0"
+                                                         CornerRadius="0"
+                                                         VerticalAlignment="Center"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Grid>
     </ScrollViewer>
 </Window>
