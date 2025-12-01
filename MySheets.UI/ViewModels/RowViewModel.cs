@@ -6,8 +6,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 public class RowViewModel : ObservableObject {
     public ObservableCollection<CellViewModel> Cells { get; }
+    
+    public string Header { get; }
 
-    public RowViewModel(IEnumerable<CellViewModel> cells) {
+    public RowViewModel(IEnumerable<CellViewModel> cells, int rowNumber) {
         Cells = new ObservableCollection<CellViewModel>(cells);
+        Header = rowNumber.ToString();
     }
 }

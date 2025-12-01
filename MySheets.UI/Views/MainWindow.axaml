@@ -13,92 +13,99 @@
     </Design.DataContext>
 
     <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-        <Grid>
-            <Grid.Background>
-                <VisualBrush TileMode="Tile" 
-                             DestinationRect="40,0,120,25" 
-                             SourceRect="0,0,120,25" 
-                             Stretch="None">
-                    <VisualBrush.Visual>
+        <Grid HorizontalAlignment="Left" VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="25"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Grid.Column="0" 
+                    Background="#F8F9FA" 
+                    BorderBrush="#C0C0C0" 
+                    BorderThickness="0,0,1,1" 
+                    ZIndex="10"/>
+
+            <ItemsControl Grid.Row="0" Grid.Column="1" ItemsSource="{Binding ColumnHeaders}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
                         <Border Width="120" Height="25" 
                                 BorderBrush="#C0C0C0" 
                                 BorderThickness="0,0,1,1" 
-                                Background="White"/>
-                    </VisualBrush.Visual>
-                </VisualBrush>
-            </Grid.Background>
+                                Background="#F8F9FA">
+                            <TextBlock Text="{Binding}" 
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center" 
+                                       FontWeight="SemiBold" 
+                                       Foreground="#333333"/>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
-            <Grid Width="40" 
-                  HorizontalAlignment="Left" 
-                  VerticalAlignment="Stretch" 
-                  ZIndex="0">
-                <Grid.Background>
-                    <VisualBrush TileMode="Tile" 
-                                 DestinationRect="0,0,40,25" 
-                                 SourceRect="0,0,40,25" 
-                                 Stretch="None">
-                        <VisualBrush.Visual>
-                            <Border Width="40" Height="25" 
+            <ItemsControl Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" ItemsSource="{Binding Rows}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RowViewModel">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" 
+                                    Width="40" Height="25" 
+                                    Background="#F8F9FA" 
                                     BorderBrush="#C0C0C0" 
-                                    BorderThickness="0,0,1,1" 
-                                    Background="#E0E0E0"/>
-                        </VisualBrush.Visual>
-                    </VisualBrush>
-                </Grid.Background>
-            </Grid>
+                                    BorderThickness="0,0,1,1">
+                                <TextBlock Text="{Binding Header}" 
+                                           HorizontalAlignment="Center" 
+                                           VerticalAlignment="Center" 
+                                           Foreground="#333333" 
+                                           FontSize="12"/>
+                            </Border>
 
-            <Grid MinWidth="2000" MinHeight="2000">
-                <ItemsControl ItemsSource="{Binding Rows}" VerticalAlignment="Top" HorizontalAlignment="Left">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Vertical"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:RowViewModel">
-                            <Grid ColumnDefinitions="40,Auto">
-                                <Border Grid.Column="0"
-                                        Width="40"
-                                        Height="25"
-                                        Background="#E0E0E0"
-                                        BorderBrush="#C0C0C0"
-                                        BorderThickness="0,0,1,1">
-                                    <TextBlock Text="{Binding Cells[0].Row}"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontSize="12"/>
-                                </Border>
-
-                                <ItemsControl Grid.Column="1" ItemsSource="{Binding Cells}">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal"/>
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:CellViewModel">
-                                            <Border BorderBrush="#C0C0C0"
-                                                    BorderThickness="0,0,1,1"
-                                                    Width="120"
-                                                    Height="25"
-                                                    Background="White">
-                                                <TextBox Text="{Binding Expression}"
-                                                         ToolTip.Tip="{Binding Value}"
-                                                         AcceptsReturn="False"
-                                                         Padding="4,2"
-                                                         Background="Transparent"
-                                                         BorderThickness="0"
-                                                         CornerRadius="0"
-                                                         VerticalAlignment="Center"/>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </Grid>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </Grid>
+                            <ItemsControl Grid.Column="1" ItemsSource="{Binding Cells}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:CellViewModel">
+                                        <Border BorderBrush="#D9D9D9" 
+                                                BorderThickness="0,0,1,1" 
+                                                Width="120" Height="25" 
+                                                Background="White">
+                                            <TextBox Text="{Binding Expression}" 
+                                                     ToolTip.Tip="{Binding Value}" 
+                                                     Background="Transparent" 
+                                                     BorderThickness="0" 
+                                                     CornerRadius="0" 
+                                                     Padding="6,3" 
+                                                     FontSize="12" 
+                                                     HorizontalAlignment="Stretch" 
+                                                     VerticalAlignment="Stretch"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </Grid>
     </ScrollViewer>
 </Window>
