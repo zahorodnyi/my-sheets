@@ -1,10 +1,11 @@
+namespace MySheets.UI;
+
 using System;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using MySheets.UI.ViewModels;
-
-namespace MySheets.UI;
+using CommunityToolkit.Mvvm.ComponentModel; // <-- REQUIRED for ObservableObject
 
 /// <summary>
 /// Given a view model, returns the corresponding view if possible.
@@ -32,6 +33,7 @@ public class ViewLocator : IDataTemplate
 
     public bool Match(object? data)
     {
-        return data is ViewModelBase;
+        // FIX: Match against the base class we are actually using
+        return data is ObservableObject;
     }
 }

@@ -1,3 +1,5 @@
+namespace MySheets.UI;
+
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
@@ -5,9 +7,7 @@ using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using Avalonia.Markup.Xaml;
 using MySheets.UI.ViewModels;
-using MySheets.UI.Views;
-
-namespace MySheets.UI;
+using MySheets.UI.Views; // Ensure this is present and correct
 
 public partial class App : Application
 {
@@ -20,10 +20,11 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
-            // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
+            // Disable Avalonia Data Annotation validation if using CommunityToolkit
             DisableAvaloniaDataAnnotationValidation();
-            desktop.MainWindow = new MainWindow
+            
+            // FIX: Explicitly reference the MainWindow type in the Views namespace
+            desktop.MainWindow = new MySheets.UI.Views.MainWindow 
             {
                 DataContext = new MainWindowViewModel(),
             };

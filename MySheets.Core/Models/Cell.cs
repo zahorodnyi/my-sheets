@@ -10,7 +10,7 @@ public enum CellType {
 
 public class Cell {
     public int Row { get; }
-    public int Column { get; }
+    public int Col { get; }
 
     private string _expression = string.Empty;
 
@@ -31,7 +31,7 @@ public class Cell {
             throw new ArgumentOutOfRangeException(nameof(row), "Coordinates cannot be negative.");
 
         Row = row;
-        Column = column;
+        Col = column;
         DetermineType();
     }
 
