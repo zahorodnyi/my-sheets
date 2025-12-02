@@ -7,7 +7,10 @@ namespace MySheets.Core.Models;
 public class Worksheet {
     private readonly Dictionary<(int Row, int Col), Cell> _cells = new();
     private readonly FormulaEvaluator _evaluator = new();
+    
     public DependencyGraph DependencyGraph { get; } = new();
+    
+    public event Action<int, int>? CellStateChanged;
 
     public Cell GetCell(int row, int col) {
         var key = (row, col);
@@ -28,13 +31,47 @@ public class Worksheet {
             foreach (var reference in CellReferenceUtility.ExtractReferences(value)) {
                 DependencyGraph.AddDependency(row, col, reference.Row, reference.Col);
             }
-            cell.Value = _evaluator.Evaluate(value);
+            cell.Value = _evaluator.Evaluate(value, GetCellValue);
         } else {
             if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out double numberResult)) {
                 cell.Value = numberResult;
             } else {
                 cell.Value = value;
             }
+        }
+        
+        CellStateChanged?.Invoke(row, col);
+        Recalculate(row, col);
+    }
+
+    private void Recalculate(int row, int col) {
+        foreach (var dependent in DependencyGraph.GetDependents(row, col)) {
+            var cell = GetCell(dependent.Item1, dependent.Item2);
+            
+            if (cell.Type == CellType.Formula) {
+                cell.Value = _evaluator.Evaluate(cell.Expression, GetCellValue);
+                CellStateChanged?.Invoke(dependent.Item1, dependent.Item2);
+                Recalculate(dependent.Item1, dependent.Item2);
+            }
+        }
+    }
+
+    private double GetCellValue(string cellReference) {
+        try {
+            var (row, col) = CellReferenceUtility.ParseReference(cellReference);
+            var cell = GetCell(row, col);
+            
+            if (cell.Value is double d) return d;
+            if (cell.Value is int i) return i;
+            if (cell.Value == null) return 0;
+            
+            if (double.TryParse(cell.Value.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double res)) {
+                return res;
+            }
+            
+            return 0; 
+        } catch {
+            throw new Exception("Invalid reference");
         }
     }
 

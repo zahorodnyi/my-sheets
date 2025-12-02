@@ -11,6 +11,14 @@ public class CellViewModel : ObservableObject {
         _model = model;
         _sheet = sheet;
         Column = column;
+        
+        _sheet.CellStateChanged += OnCellStateChanged;
+    }
+
+    private void OnCellStateChanged(int row, int col) {
+        if (row == _model.Row && col == _model.Col) {
+            OnPropertyChanged(nameof(Value));
+        }
     }
 
     public ColumnViewModel Column { get; }
@@ -25,14 +33,9 @@ public class CellViewModel : ObservableObject {
             if (_model.Expression != value) {
                 _sheet.SetCell(_model.Row, _model.Col, value);
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(Value));
             }
         }
     }
 
     public object Value => _model.Value;
-
-    public void UpdateFromModel() {
-        OnPropertyChanged(nameof(Value));
-    }
 }

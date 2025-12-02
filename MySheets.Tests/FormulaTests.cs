@@ -95,4 +95,30 @@ public class FormulaTests {
 
         Assert.Equal(20.0, cell.Value);
     }
+    
+    [Fact]
+    public void SetCell_ShouldUpdateDependentCells() {
+        var sheet = new Worksheet();
+        sheet.SetCell(0, 0, "10");    
+        sheet.SetCell(0, 1, "=A1*2"); 
+        
+        sheet.SetCell(0, 0, "5");
+        
+        var b1 = sheet.GetCell(0, 1);
+        Assert.Equal(10.0, b1.Value); 
+    }
+
+    [Fact]
+    public void SetCell_ShouldUpdateChainedDependencies() {
+        var sheet = new Worksheet();
+        sheet.SetCell(0, 0, "2");      
+        sheet.SetCell(0, 1, "=A1*2"); 
+        sheet.SetCell(0, 2, "=B1+1");  
+        
+        sheet.SetCell(0, 0, "5");
+        
+        var c1 = sheet.GetCell(0, 2);
+        Assert.Equal(11.0, c1.Value);
+    }
+    
 }

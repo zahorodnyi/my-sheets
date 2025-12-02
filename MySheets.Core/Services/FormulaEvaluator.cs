@@ -4,7 +4,7 @@ using System.Text;
 namespace MySheets.Core.Services;
 
 public class FormulaEvaluator {
-    public object Evaluate(string expression) {
+    public object Evaluate(string expression, Func<string, double> getVariableValue) {
         if (string.IsNullOrEmpty(expression)) return string.Empty;
         
         if (expression.StartsWith('=')) {
@@ -14,7 +14,7 @@ public class FormulaEvaluator {
         try {
             var tokens = Tokenize(expression);
             var rpn = ShuntingYard(tokens);
-            return EvaluateRPN(rpn);
+            return EvaluateRPN(rpn, getVariableValue);
         } catch {
             return "#ERROR!";
         }
@@ -31,6 +31,13 @@ public class FormulaEvaluator {
 
             if (char.IsDigit(c) || c == '.') {
                 buffer.Append(c);
+            } else if (char.IsLetter(c)) {
+                buffer.Append(c);
+                while (i + 1 < expression.Length && (char.IsLetterOrDigit(expression[i + 1]))) {
+                    buffer.Append(expression[++i]);
+                }
+                tokens.Add(buffer.ToString());
+                buffer.Clear();
             } else {
                 if (buffer.Length > 0) {
                     tokens.Add(buffer.ToString());
@@ -52,7 +59,7 @@ public class FormulaEvaluator {
         var operators = new Stack<string>();
 
         foreach (var token in tokens) {
-            if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out _)) {
+            if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out _) || IsIdentifier(token)) {
                 output.Enqueue(token);
             } else if (token == "(") {
                 operators.Push(token);
@@ -76,7 +83,7 @@ public class FormulaEvaluator {
         return output;
     }
 
-    private double EvaluateRPN(Queue<string> tokens) {
+    private double EvaluateRPN(Queue<string> tokens, Func<string, double> getVariableValue) {
         var stack = new Stack<double>();
 
         while (tokens.Count > 0) {
@@ -84,10 +91,10 @@ public class FormulaEvaluator {
 
             if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out double value)) {
                 stack.Push(value);
+            } else if (IsIdentifier(token)) {
+                stack.Push(getVariableValue(token));
             } else {
-                if (stack.Count < 2) {
-                    throw new InvalidOperationException("Invalid expression");
-                }
+                if (stack.Count < 2) throw new InvalidOperationException("Invalid expression");
                 
                 var right = stack.Pop();
                 var left = stack.Pop();
@@ -96,17 +103,22 @@ public class FormulaEvaluator {
                     case "+": stack.Push(left + right); break;
                     case "-": stack.Push(left - right); break;
                     case "*": stack.Push(left * right); break;
-                    case "/": stack.Push(left / right); break;
+                    case "/": 
+                        if (right == 0) throw new DivideByZeroException();
+                        stack.Push(left / right); 
+                        break;
                     default: throw new InvalidOperationException("Unknown operator");
                 }
             }
         }
 
-        if (stack.Count != 1) {
-             throw new InvalidOperationException("Invalid expression");
-        }
+        if (stack.Count != 1) throw new InvalidOperationException("Invalid expression");
 
         return stack.Pop();
+    }
+
+    private bool IsIdentifier(string token) {
+        return char.IsLetter(token[0]);
     }
 
     private bool IsOperator(string token) {
