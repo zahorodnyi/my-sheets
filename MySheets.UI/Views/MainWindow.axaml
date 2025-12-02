@@ -95,8 +95,7 @@
             </ScrollViewer>
 
             <ScrollViewer Grid.Row="1" Grid.Column="1" x:Name="MainScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <!-- PANEL: Background Transparent is crucial for catching clicks -->
-                <Panel Background="Transparent" PointerPressed="OnMainPointerPressed">
+                <Panel x:Name="CellPanel" Background="Transparent" PointerPressed="OnMainPointerPressed">
                     <ItemsControl ItemsSource="{Binding Rows}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate><StackPanel Orientation="Vertical"/></ItemsPanelTemplate>
@@ -130,7 +129,20 @@
                     </ItemsControl>
 
                     <Canvas IsHitTestVisible="False">
-                        <Border BorderBrush="#107C41" BorderThickness="2" Background="#33107C41" IsVisible="{Binding IsSelectionVisible}" Canvas.Left="{Binding SelectionX}" Canvas.Top="{Binding SelectionY}" Width="{Binding SelectionWidth}" Height="{Binding SelectionHeight}"/>
+                        <!-- Selection Area (Light Blue Fill + Thin Border) -->
+                        <Border BorderBrush="#1A73E8" BorderThickness="1" Background="#201A73E8" 
+                                IsVisible="{Binding IsSelectionVisible}" 
+                                Canvas.Left="{Binding SelectionX}" 
+                                Canvas.Top="{Binding SelectionY}" 
+                                Width="{Binding SelectionWidth}" 
+                                Height="{Binding SelectionHeight}"/>
+                                
+                        <!-- Active Cell Indicator (Thick Blue Border, No Fill) -->
+                        <Border x:Name="ActiveCellBorder"
+                                BorderBrush="#1A73E8" 
+                                BorderThickness="2" 
+                                Background="Transparent"
+                                IsVisible="False"/>
                     </Canvas>
                 </Panel>
             </ScrollViewer>

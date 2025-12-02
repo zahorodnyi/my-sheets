@@ -21,6 +21,10 @@ public partial class MainWindow : Window {
     
     private int _lastSelectedRowIndex = -1;
     private int _lastSelectedColIndex = -1;
+    
+    // Зберігаємо "якір" виділення - клітинку, з якої почали
+    private int _anchorRowIndex = -1;
+    private int _anchorColIndex = -1;
 
     public MainWindow() {
         InitializeComponent();
@@ -29,6 +33,30 @@ public partial class MainWindow : Window {
             ColHeaderScrollViewer.Offset = new Vector(MainScrollViewer.Offset.X, 0);
             RowHeaderScrollViewer.Offset = new Vector(0, MainScrollViewer.Offset.Y);
         };
+    }
+
+    protected override void OnTextInput(TextInputEventArgs e) {
+        base.OnTextInput(e);
+        
+        // Фіча "Type-to-Edit"
+        if (!string.IsNullOrEmpty(e.Text) && 
+            _anchorRowIndex != -1 && 
+            _anchorColIndex != -1 && 
+            DataContext is MainWindowViewModel vm) {
+            
+            // 1. Рахуємо центр активної клітинки
+            var rect = GetCellRect(_anchorRowIndex, _anchorColIndex, vm);
+            var centerPoint = new Point(rect.X + rect.Width / 2, rect.Y + rect.Height / 2);
+            
+            // 2. Входимо в режим редагування в цій точці
+            var textBox = EnterEditMode(CellPanel, centerPoint);
+            
+            // 3. Якщо успішно, записуємо текст
+            if (textBox != null) {
+                textBox.Text = e.Text;
+                textBox.CaretIndex = e.Text.Length;
+            }
+        }
     }
 
     private void OnColumnHeaderPressed(object? sender, PointerPressedEventArgs e) {
@@ -67,7 +95,7 @@ public partial class MainWindow : Window {
             var (r, c) = GetRowColumnAt(absX, absY, vm);
             
             if (r != -1 && c != -1) {
-                if (r == _lastSelectedRowIndex && c == _lastSelectedColIndex) {
+                if (r == _anchorRowIndex && c == _anchorColIndex) {
                     EnterEditMode(panel, e.GetPosition(panel));
                     return;
                 }
@@ -76,7 +104,12 @@ public partial class MainWindow : Window {
                 _lastSelectedRowIndex = r;
                 _lastSelectedColIndex = c;
                 
+                // Встановлюємо якір (Active Cell)
+                _anchorRowIndex = r;
+                _anchorColIndex = c;
+                
                 vm.StartSelection(r, c);
+                UpdateActiveCellVisual(vm); // Оновлюємо синю рамку
                 
                 _capturedControl = panel;
                 e.Pointer.Capture(panel);
@@ -84,19 +117,22 @@ public partial class MainWindow : Window {
         }
     }
     
-    private void EnterEditMode(Control parentControl, Point point) {
+    // Модифікований метод: повертає TextBox
+    private TextBox? EnterEditMode(Control parentControl, Point point) {
         var hit = parentControl.InputHitTest(point);
         
         if (hit is Visual visual) {
             var cellBorder = (visual as Border) ?? visual.FindAncestorOfType<Border>();
             if (cellBorder != null) {
                 var textBox = cellBorder.FindDescendantOfType<TextBox>();
-                if (textBox != null) {
+                if (textBox != null && !textBox.IsHitTestVisible) {
                     textBox.IsHitTestVisible = true;
                     textBox.Focus();
+                    return textBox;
                 }
             }
         }
+        return null;
     }
 
     private void OnCellEditorLostFocus(object? sender, RoutedEventArgs e) {
@@ -111,13 +147,19 @@ public partial class MainWindow : Window {
             var delta = currentPosition.X - _lastMousePosition.X;
             _targetColumn.Width = Math.Max(30, _targetColumn.Width + delta);
             _lastMousePosition = currentPosition;
+            
+            // При ресайзі теж варто оновлювати рамку активної клітинки
+            if (DataContext is MainWindowViewModel vm) UpdateActiveCellVisual(vm);
+            
         } else if (_isResizingRow && _targetRow != null) {
             var currentPosition = e.GetPosition(this);
             var delta = currentPosition.Y - _lastMousePosition.Y;
             _targetRow.Height = Math.Max(20, _targetRow.Height + delta);
             _lastMousePosition = currentPosition;
-        } 
-        else if (_isSelecting && DataContext is MainWindowViewModel vm) {
+
+            if (DataContext is MainWindowViewModel vm) UpdateActiveCellVisual(vm);
+
+        } else if (_isSelecting && DataContext is MainWindowViewModel vm) {
             var mousePoint = e.GetPosition(MainScrollViewer);
             
             double absX = mousePoint.X + MainScrollViewer.Offset.X;
@@ -152,6 +194,40 @@ public partial class MainWindow : Window {
             e.Pointer.Capture(null);
             _capturedControl = null;
         }
+    }
+    
+    // Новий метод для малювання синьої рамки навколо активної клітинки
+    private void UpdateActiveCellVisual(MainWindowViewModel vm) {
+        if (_anchorRowIndex == -1 || _anchorColIndex == -1) {
+            ActiveCellBorder.IsVisible = false;
+            return;
+        }
+
+        var rect = GetCellRect(_anchorRowIndex, _anchorColIndex, vm);
+        
+        Canvas.SetLeft(ActiveCellBorder, rect.X);
+        Canvas.SetTop(ActiveCellBorder, rect.Y);
+        ActiveCellBorder.Width = rect.Width;
+        ActiveCellBorder.Height = rect.Height;
+        ActiveCellBorder.IsVisible = true;
+    }
+
+    // Допоміжний метод для розрахунку позиції клітинки
+    private Rect GetCellRect(int rowIdx, int colIdx, MainWindowViewModel vm) {
+        double x = 0;
+        for (int i = 0; i < colIdx && i < vm.ColumnHeaders.Count; i++) {
+            x += vm.ColumnHeaders[i].Width;
+        }
+        
+        double y = 0;
+        for (int i = 0; i < rowIdx && i < vm.Rows.Count; i++) {
+            y += vm.Rows[i].Height;
+        }
+        
+        double w = (colIdx >= 0 && colIdx < vm.ColumnHeaders.Count) ? vm.ColumnHeaders[colIdx].Width : 0;
+        double h = (rowIdx >= 0 && rowIdx < vm.Rows.Count) ? vm.Rows[rowIdx].Height : 0;
+        
+        return new Rect(x, y, w, h);
     }
 
     private (int row, int col) GetRowColumnAt(double x, double y, MainWindowViewModel vm) {
