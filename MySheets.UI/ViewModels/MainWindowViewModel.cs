@@ -1,179 +1,60 @@
-﻿namespace MySheets.UI.ViewModels;
-
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MySheets.Core.Models;
 using MySheets.Core.Services;
 
+namespace MySheets.UI.ViewModels;
+
 public partial class MainWindowViewModel : ObservableObject {
-    private readonly Worksheet _sheet;
     private readonly FileService _fileService;
-    private int _anchorRow;
-    private int _anchorCol;
+    private int _untitledCount = 1;
 
-    [ObservableProperty] private double _selectionX;
-    [ObservableProperty] private double _selectionY;
-    [ObservableProperty] private double _selectionWidth;
-    [ObservableProperty] private double _selectionHeight;
-    [ObservableProperty] private bool _isSelectionVisible;
-    
-    [ObservableProperty] private double _refSelectionX;
-    [ObservableProperty] private double _refSelectionY;
-    [ObservableProperty] private double _refSelectionWidth;
-    [ObservableProperty] private double _refSelectionHeight;
-    [ObservableProperty] private bool _isRefSelectionVisible;
-    
-    [ObservableProperty] private CellViewModel? _selectedCell;
+    public ObservableCollection<SheetViewModel> Sheets { get; } = new();
 
-    public ObservableCollection<ColumnViewModel> ColumnHeaders { get; }
-    public ObservableCollection<RowViewModel> Rows { get; }
+    [ObservableProperty] 
+    private SheetViewModel? _activeSheet;
 
     public MainWindowViewModel() {
-        _sheet = new Worksheet();
         _fileService = new FileService();
-        ColumnHeaders = new ObservableCollection<ColumnViewModel>();
-        Rows = new ObservableCollection<RowViewModel>();
-
-        const int RowCount = 50;
-        const int ColCount = 25;
-
-        for (int c = 0; c < ColCount; c++) {
-            ColumnHeaders.Add(new ColumnViewModel(GetColumnName(c)));
-        }
-
-        for (var r = 0; r < RowCount; r++) {
-            var rowCells = new List<CellViewModel>();
-            for (var c = 0; c < ColCount; c++) {
-                var cellModel = _sheet.GetCell(r, c);
-                rowCells.Add(new CellViewModel(cellModel, _sheet, ColumnHeaders[c]));
-            }
-            Rows.Add(new RowViewModel(rowCells, r + 1));
-        }
-
-        _sheet.CellStateChanged += OnCellStateChanged;
+        AddNewSheet();
     }
 
-    private void OnCellStateChanged(int row, int col) {
-        if (row < Rows.Count && col < Rows[row].Cells.Count) {
-            var vm = Rows[row].Cells[col];
-            vm.Refresh();
-        }
+    [RelayCommand]
+    public void AddNewSheet() {
+        var newSheet = new SheetViewModel($"Sheet{_untitledCount++}");
+        Sheets.Add(newSheet);
+        ActiveSheet = newSheet;
+    }
+
+    [RelayCommand]
+    private void AddRowToActive() {
+        ActiveSheet?.AddRow();
+    }
+
+    [RelayCommand]
+    private void RemoveRowFromActive() {
+        ActiveSheet?.RemoveRow();
     }
 
     public void SaveData(string path) {
-        _fileService.Save(path, _sheet.Cells);
+        if (ActiveSheet == null) return;
+        _fileService.Save(path, ActiveSheet.Worksheet.Cells);
+        ActiveSheet.Name = System.IO.Path.GetFileNameWithoutExtension(path);
     }
 
     public void LoadData(string path) {
         var data = _fileService.Load(path);
-        _sheet.Clear();
+        
+        var fileName = System.IO.Path.GetFileNameWithoutExtension(path);
+        var newSheet = new SheetViewModel(fileName);
         
         foreach (var cellDto in data) {
-            _sheet.SetCell(cellDto.Row, cellDto.Col, cellDto.Expression);
-        }
-        
-        if (SelectedCell != null) {
-            SelectedCell = Rows[SelectedCell.Row].Cells[SelectedCell.Col]; 
-        }
-    }
-
-    public void ShowRefSelection(int row, int col) {
-        double x = 0;
-        double y = 0;
-        double w = ColumnHeaders[col].Width;
-        double h = Rows[row].Height;
-
-        for (int c = 0; c < col; c++) x += ColumnHeaders[c].Width;
-        for (int r = 0; r < row; r++) y += Rows[r].Height;
-
-        RefSelectionX = x;
-        RefSelectionY = y;
-        RefSelectionWidth = w;
-        RefSelectionHeight = h;
-        IsRefSelectionVisible = true;
-    }
-
-    public void HideRefSelection() {
-        IsRefSelectionVisible = false;
-    }
-
-    public void StartSelection(int row, int col) {
-        _anchorRow = row;
-        _anchorCol = col;
-        
-        if (row >= 0 && row < Rows.Count && col >= 0 && col < Rows[row].Cells.Count) {
-            SelectedCell = Rows[row].Cells[col];
+            newSheet.Worksheet.SetCell(cellDto.Row, cellDto.Col, cellDto.Expression);
         }
 
-        IsSelectionVisible = true;
-        UpdateSelectionGeometry(row, col);
-    }
-
-    public void UpdateSelection(int row, int col) {
-        UpdateSelectionGeometry(row, col);
-    }
-
-    private void UpdateSelectionGeometry(int currentRow, int currentCol) {
-        int startR = Math.Min(_anchorRow, currentRow);
-        int endR = Math.Max(_anchorRow, currentRow);
-        int startC = Math.Min(_anchorCol, currentCol);
-        int endC = Math.Max(_anchorCol, currentCol);
-
-        double x = 0;
-        double y = 0;
-        double w = 0;
-        double h = 0;
-
-        for (int c = 0; c < startC; c++) x += ColumnHeaders[c].Width;
-        for (int r = 0; r < startR; r++) y += Rows[r].Height;
-        for (int c = startC; c <= endC; c++) w += ColumnHeaders[c].Width;
-        for (int r = startR; r <= endR; r++) h += Rows[r].Height;
-
-        SelectionX = x;
-        SelectionY = y;
-        SelectionWidth = w;
-        SelectionHeight = h;
-    }
-
-    [RelayCommand]
-    private void AddRow() {
-        int rowIndex = Rows.Count;
-        var rowCells = new List<CellViewModel>();
-        for (int c = 0; c < ColumnHeaders.Count; c++) {
-            var cellModel = _sheet.GetCell(rowIndex, c);
-            rowCells.Add(new CellViewModel(cellModel, _sheet, ColumnHeaders[c]));
-        }
-        Rows.Add(new RowViewModel(rowCells, rowIndex + 1));
-    }
-
-    [RelayCommand]
-    private void RemoveRow() {
-        if (Rows.Count > 0) Rows.RemoveAt(Rows.Count - 1);
-    }
-
-    [RelayCommand]
-    private void AddColumn() {
-        int colIndex = ColumnHeaders.Count;
-        var newColumn = new ColumnViewModel(GetColumnName(colIndex));
-        ColumnHeaders.Add(newColumn);
-        for (int r = 0; r < Rows.Count; r++) {
-            var cellModel = _sheet.GetCell(r, colIndex);
-            Rows[r].Cells.Add(new CellViewModel(cellModel, _sheet, newColumn));
-        }
-    }
-
-    [RelayCommand]
-    private void RemoveColumn() {
-        if (ColumnHeaders.Count > 0) {
-            int lastColIndex = ColumnHeaders.Count - 1;
-            ColumnHeaders.RemoveAt(lastColIndex);
-            foreach (var row in Rows) {
-                if (row.Cells.Count > 0) row.Cells.RemoveAt(row.Cells.Count - 1);
-            }
-        }
+        Sheets.Add(newSheet);
+        ActiveSheet = newSheet;
     }
 
     public static string GetColumnName(int index) {
