@@ -4,13 +4,17 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-public class RowViewModel : ObservableObject {
+public partial class RowViewModel : ObservableObject {
     public ObservableCollection<CellViewModel> Cells { get; }
     
     public string Header { get; }
 
-    public RowViewModel(IEnumerable<CellViewModel> cells, int rowNumber) {
+    [ObservableProperty]
+    private double _height;
+
+    public RowViewModel(IEnumerable<CellViewModel> cells, int rowNumber, double height = 25) {
         Cells = new ObservableCollection<CellViewModel>(cells);
         Header = rowNumber.ToString();
+        _height = height;
     }
 }

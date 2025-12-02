@@ -10,26 +10,26 @@ using MySheets.Core.Models;
 public partial class MainWindowViewModel : ObservableObject {
     private readonly Worksheet _sheet;
 
-    public ObservableCollection<string> ColumnHeaders { get; }
+    public ObservableCollection<ColumnViewModel> ColumnHeaders { get; }
     public ObservableCollection<RowViewModel> Rows { get; }
 
     public MainWindowViewModel() {
         _sheet = new Worksheet();
-        ColumnHeaders = new ObservableCollection<string>();
+        ColumnHeaders = new ObservableCollection<ColumnViewModel>();
         Rows = new ObservableCollection<RowViewModel>();
 
-        const int RowCount = 50; // todo move to utils
-        const int ColCount = 25; // todo move to utils
+        const int RowCount = 50;
+        const int ColCount = 25;
 
         for (int c = 0; c < ColCount; c++) {
-            ColumnHeaders.Add(GetColumnName(c));
+            ColumnHeaders.Add(new ColumnViewModel(GetColumnName(c)));
         }
 
         for (var r = 0; r < RowCount; r++) {
             var rowCells = new List<CellViewModel>();
             for (var c = 0; c < ColCount; c++) {
                 var cellModel = _sheet.GetCell(r, c);
-                rowCells.Add(new CellViewModel(cellModel));
+                rowCells.Add(new CellViewModel(cellModel, ColumnHeaders[c]));
             }
             Rows.Add(new RowViewModel(rowCells, r + 1));
         }
@@ -42,7 +42,7 @@ public partial class MainWindowViewModel : ObservableObject {
         
         for (int c = 0; c < ColumnHeaders.Count; c++) {
             var cellModel = _sheet.GetCell(rowIndex, c);
-            rowCells.Add(new CellViewModel(cellModel));
+            rowCells.Add(new CellViewModel(cellModel, ColumnHeaders[c]));
         }
         
         Rows.Add(new RowViewModel(rowCells, rowIndex + 1));
@@ -58,11 +58,12 @@ public partial class MainWindowViewModel : ObservableObject {
     [RelayCommand]
     private void AddColumn() {
         int colIndex = ColumnHeaders.Count;
-        ColumnHeaders.Add(GetColumnName(colIndex));
+        var newColumn = new ColumnViewModel(GetColumnName(colIndex));
+        ColumnHeaders.Add(newColumn);
 
         for (int r = 0; r < Rows.Count; r++) {
             var cellModel = _sheet.GetCell(r, colIndex);
-            Rows[r].Cells.Add(new CellViewModel(cellModel));
+            Rows[r].Cells.Add(new CellViewModel(cellModel, newColumn));
         }
     }
 

@@ -6,9 +6,12 @@ using MySheets.Core.Models;
 public class CellViewModel : ObservableObject {
     private readonly Cell _model;
 
-    public CellViewModel(Cell model) {
+    public CellViewModel(Cell model, ColumnViewModel column) {
         _model = model;
+        Column = column;
     }
+
+    public ColumnViewModel Column { get; }
 
     public int Row => _model.Row;
 

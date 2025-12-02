@@ -6,7 +6,9 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="MySheets.UI.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
-        Title="MySheets.UI">
+        Title="MySheets.UI"
+        PointerReleased="OnPointerReleased"
+        PointerMoved="OnPointerMoved">
 
     <Design.DataContext>
         <vm:MainWindowViewModel/>
@@ -55,16 +57,23 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Width="120" Height="25" 
-                                    BorderBrush="#C0C0C0" 
-                                    BorderThickness="0,0,1,1" 
-                                    Background="#F8F9FA">
-                                <TextBlock Text="{Binding}" 
-                                           HorizontalAlignment="Center" 
-                                           VerticalAlignment="Center" 
-                                           FontWeight="SemiBold" 
-                                           Foreground="#333333"/>
-                            </Border>
+                            <Panel Width="{Binding Width}">
+                                <Border BorderBrush="#C0C0C0" 
+                                        BorderThickness="0,0,1,1" 
+                                        Background="#F8F9FA">
+                                    <TextBlock Text="{Binding Header}" 
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center" 
+                                               FontWeight="SemiBold" 
+                                               Foreground="#333333"/>
+                                </Border>
+                                <Border Width="5" 
+                                        HorizontalAlignment="Right" 
+                                        Background="Transparent" 
+                                        Cursor="SizeWestEast"
+                                        Tag="{Binding}"
+                                        PointerPressed="OnColumnHeaderPressed"/>
+                            </Panel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -82,16 +91,23 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:RowViewModel">
-                            <Border Width="40" Height="25" 
-                                    Background="#F8F9FA" 
-                                    BorderBrush="#C0C0C0" 
-                                    BorderThickness="0,0,1,1">
-                                <TextBlock Text="{Binding Header}" 
-                                           HorizontalAlignment="Center" 
-                                           VerticalAlignment="Center" 
-                                           Foreground="#333333" 
-                                           FontSize="12"/>
-                            </Border>
+                            <Panel Height="{Binding Height}">
+                                <Border Background="#F8F9FA" 
+                                        BorderBrush="#C0C0C0" 
+                                        BorderThickness="0,0,1,1">
+                                    <TextBlock Text="{Binding Header}" 
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center" 
+                                               Foreground="#333333" 
+                                               FontSize="12"/>
+                                </Border>
+                                <Border Height="5" 
+                                        VerticalAlignment="Bottom" 
+                                        Background="Transparent" 
+                                        Cursor="SizeNorthSouth"
+                                        Tag="{Binding}"
+                                        PointerPressed="OnRowHeaderPressed"/>
+                            </Panel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -109,7 +125,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:RowViewModel">
-                            <ItemsControl ItemsSource="{Binding Cells}">
+                            <ItemsControl ItemsSource="{Binding Cells}" Height="{Binding Height}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <StackPanel Orientation="Horizontal"/>
@@ -119,7 +135,7 @@
                                     <DataTemplate x:DataType="vm:CellViewModel">
                                         <Border BorderBrush="#D9D9D9" 
                                                 BorderThickness="0,0,1,1" 
-                                                Width="120" Height="25" 
+                                                Width="{Binding Column.Width}" 
                                                 Background="White">
                                             <TextBox Text="{Binding Expression}" 
                                                      ToolTip.Tip="{Binding Value}" 
