@@ -1,3 +1,4 @@
+using System.Globalization;
 using MySheets.Core.Services;
 using MySheets.Core.Utilities;
 
@@ -22,14 +23,19 @@ public class Worksheet {
         DependencyGraph.ClearDependencies(row, col);
         var cell = GetCell(row, col);
         cell.Expression = value;
+
         if (value.StartsWith("=")) {
             foreach (var reference in CellReferenceUtility.ExtractReferences(value)) {
                 DependencyGraph.AddDependency(row, col, reference.Row, reference.Col);
             }
-            var evalResult = _evaluator.Evaluate(value);
-            
-            cell.Value = evalResult;
-        } 
+            cell.Value = _evaluator.Evaluate(value);
+        } else {
+            if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out double numberResult)) {
+                cell.Value = numberResult;
+            } else {
+                cell.Value = value;
+            }
+        }
     }
 
     public int ActiveCellCount => _cells.Count;

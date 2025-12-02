@@ -17,6 +17,8 @@ public partial class MainWindowViewModel : ObservableObject {
     [ObservableProperty] private double _selectionWidth;
     [ObservableProperty] private double _selectionHeight;
     [ObservableProperty] private bool _isSelectionVisible;
+    
+    [ObservableProperty] private CellViewModel? _selectedCell;
 
     public ObservableCollection<ColumnViewModel> ColumnHeaders { get; }
     public ObservableCollection<RowViewModel> Rows { get; }
@@ -37,7 +39,7 @@ public partial class MainWindowViewModel : ObservableObject {
             var rowCells = new List<CellViewModel>();
             for (var c = 0; c < ColCount; c++) {
                 var cellModel = _sheet.GetCell(r, c);
-                rowCells.Add(new CellViewModel(cellModel, ColumnHeaders[c]));
+                rowCells.Add(new CellViewModel(cellModel, _sheet, ColumnHeaders[c]));
             }
             Rows.Add(new RowViewModel(rowCells, r + 1));
         }
@@ -46,6 +48,11 @@ public partial class MainWindowViewModel : ObservableObject {
     public void StartSelection(int row, int col) {
         _anchorRow = row;
         _anchorCol = col;
+        
+        if (row >= 0 && row < Rows.Count && col >= 0 && col < Rows[row].Cells.Count) {
+            SelectedCell = Rows[row].Cells[col];
+        }
+
         IsSelectionVisible = true;
         UpdateSelectionGeometry(row, col);
     }
@@ -94,7 +101,7 @@ public partial class MainWindowViewModel : ObservableObject {
         
         for (int c = 0; c < ColumnHeaders.Count; c++) {
             var cellModel = _sheet.GetCell(rowIndex, c);
-            rowCells.Add(new CellViewModel(cellModel, ColumnHeaders[c]));
+            rowCells.Add(new CellViewModel(cellModel, _sheet, ColumnHeaders[c]));
         }
         
         Rows.Add(new RowViewModel(rowCells, rowIndex + 1));
@@ -115,7 +122,7 @@ public partial class MainWindowViewModel : ObservableObject {
 
         for (int r = 0; r < Rows.Count; r++) {
             var cellModel = _sheet.GetCell(r, colIndex);
-            Rows[r].Cells.Add(new CellViewModel(cellModel, newColumn));
+            Rows[r].Cells.Add(new CellViewModel(cellModel, _sheet, newColumn));
         }
     }
 

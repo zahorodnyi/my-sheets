@@ -5,9 +5,11 @@ using MySheets.Core.Models;
 
 public class CellViewModel : ObservableObject {
     private readonly Cell _model;
+    private readonly Worksheet _sheet;
 
-    public CellViewModel(Cell model, ColumnViewModel column) {
+    public CellViewModel(Cell model, Worksheet sheet, ColumnViewModel column) {
         _model = model;
+        _sheet = sheet;
         Column = column;
     }
 
@@ -21,8 +23,9 @@ public class CellViewModel : ObservableObject {
         get => _model.Expression;
         set {
             if (_model.Expression != value) {
-                _model.Expression = value;
+                _sheet.SetCell(_model.Row, _model.Col, value);
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(Value));
             }
         }
     }

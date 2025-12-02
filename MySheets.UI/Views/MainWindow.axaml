@@ -37,7 +37,15 @@
     <DockPanel LastChildFill="True">
         <Border DockPanel.Dock="Top" Height="40" Background="#F0F0F0" BorderBrush="#C0C0C0" BorderThickness="0,0,0,1" Padding="10,0">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
-                <TextBlock Text="MySheets Toolbar" Foreground="#666666" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <TextBlock Text="MySheets" Foreground="#666666" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <Border Width="1" Height="20" Background="#C0C0C0"/>
+                <TextBlock Text="fx" FontFamily="Times New Roman" FontStyle="Italic" FontWeight="Bold" VerticalAlignment="Center" Foreground="#666666"/>
+                <TextBox Width="300" 
+                         Text="{Binding SelectedCell.Expression}" 
+                         VerticalAlignment="Center"
+                         Height="26"
+                         BorderThickness="0"
+                         CornerRadius="2"/>
             </StackPanel>
         </Border>
 
@@ -95,7 +103,6 @@
             </ScrollViewer>
 
             <ScrollViewer Grid.Row="1" Grid.Column="1" x:Name="MainScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <!-- ДОДАНО Focusable="True", щоб панель перехоплювала фокус у TextBox -->
                 <Panel x:Name="CellPanel" Background="Transparent" Focusable="True" PointerPressed="OnMainPointerPressed">
                     <ItemsControl ItemsSource="{Binding Rows}">
                         <ItemsControl.ItemsPanel>
@@ -110,17 +117,26 @@
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="vm:CellViewModel">
                                             <Border BorderBrush="#D9D9D9" BorderThickness="0,0,1,1" Width="{Binding Column.Width}" Background="White">
-                                                <TextBox x:Name="CellEditor"
-                                                         Text="{Binding Expression}" 
-                                                         IsHitTestVisible="False" 
-                                                         LostFocus="OnCellEditorLostFocus"
-                                                         Background="Transparent" 
-                                                         BorderThickness="0" 
-                                                         CornerRadius="0" 
-                                                         Padding="6,3" 
-                                                         FontSize="12" 
-                                                         HorizontalAlignment="Stretch" 
-                                                         VerticalAlignment="Stretch"/>
+                                                <Panel>
+                                                    <TextBlock Text="{Binding Value}" 
+                                                               VerticalAlignment="Center" 
+                                                               HorizontalAlignment="Left"
+                                                               Margin="9,0,0,0"
+                                                               FontSize="12"/>
+                                                    
+                                                    <TextBox x:Name="CellEditor"
+                                                             Text="{Binding Expression}" 
+                                                             IsHitTestVisible="False" 
+                                                             LostFocus="OnCellEditorLostFocus"
+                                                             Background="White" 
+                                                             BorderThickness="0" 
+                                                             CornerRadius="0" 
+                                                             Padding="6,3" 
+                                                             FontSize="12"
+                                                             Opacity="0"
+                                                             HorizontalAlignment="Stretch" 
+                                                             VerticalAlignment="Stretch"/>
+                                                </Panel>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -130,7 +146,6 @@
                     </ItemsControl>
 
                     <Canvas IsHitTestVisible="False">
-                        <!-- Selection Area -->
                         <Border BorderBrush="#1A73E8" BorderThickness="1" Background="#201A73E8" 
                                 IsVisible="{Binding IsSelectionVisible}" 
                                 Canvas.Left="{Binding SelectionX}" 
@@ -138,7 +153,6 @@
                                 Width="{Binding SelectionWidth}" 
                                 Height="{Binding SelectionHeight}"/>
                                 
-                        <!-- Active Cell Indicator -->
                         <Border x:Name="ActiveCellBorder"
                                 BorderBrush="#1A73E8" 
                                 BorderThickness="2" 

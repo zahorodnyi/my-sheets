@@ -90,7 +90,6 @@ public partial class MainWindow : Window {
             var (r, c) = GetRowColumnAt(absX, absY, vm);
             
             if (r != -1 && c != -1) {
-                // ВАЖЛИВО: Забираємо фокус у будь-якого активного TextBox і передаємо його панелі.
                 panel.Focus();
 
                 if (r == _anchorRowIndex && c == _anchorColIndex) {
@@ -123,6 +122,7 @@ public partial class MainWindow : Window {
                 var textBox = cellBorder.FindDescendantOfType<TextBox>();
                 if (textBox != null && !textBox.IsHitTestVisible) {
                     textBox.IsHitTestVisible = true;
+                    textBox.Opacity = 1; // Show formula
                     textBox.Focus();
                     return textBox;
                 }
@@ -134,6 +134,7 @@ public partial class MainWindow : Window {
     private void OnCellEditorLostFocus(object? sender, RoutedEventArgs e) {
         if (sender is TextBox textBox) {
             textBox.IsHitTestVisible = false;
+            textBox.Opacity = 0; // Hide formula, show value
         }
     }
 
