@@ -95,7 +95,8 @@
             </ScrollViewer>
 
             <ScrollViewer Grid.Row="1" Grid.Column="1" x:Name="MainScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                <Panel x:Name="CellPanel" Background="Transparent" PointerPressed="OnMainPointerPressed">
+                <!-- ДОДАНО Focusable="True", щоб панель перехоплювала фокус у TextBox -->
+                <Panel x:Name="CellPanel" Background="Transparent" Focusable="True" PointerPressed="OnMainPointerPressed">
                     <ItemsControl ItemsSource="{Binding Rows}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate><StackPanel Orientation="Vertical"/></ItemsPanelTemplate>
@@ -129,7 +130,7 @@
                     </ItemsControl>
 
                     <Canvas IsHitTestVisible="False">
-                        <!-- Selection Area (Light Blue Fill + Thin Border) -->
+                        <!-- Selection Area -->
                         <Border BorderBrush="#1A73E8" BorderThickness="1" Background="#201A73E8" 
                                 IsVisible="{Binding IsSelectionVisible}" 
                                 Canvas.Left="{Binding SelectionX}" 
@@ -137,7 +138,7 @@
                                 Width="{Binding SelectionWidth}" 
                                 Height="{Binding SelectionHeight}"/>
                                 
-                        <!-- Active Cell Indicator (Thick Blue Border, No Fill) -->
+                        <!-- Active Cell Indicator -->
                         <Border x:Name="ActiveCellBorder"
                                 BorderBrush="#1A73E8" 
                                 BorderThickness="2" 

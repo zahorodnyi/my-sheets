@@ -22,7 +22,6 @@ public partial class MainWindow : Window {
     private int _lastSelectedRowIndex = -1;
     private int _lastSelectedColIndex = -1;
     
-    // Зберігаємо "якір" виділення - клітинку, з якої почали
     private int _anchorRowIndex = -1;
     private int _anchorColIndex = -1;
 
@@ -38,20 +37,16 @@ public partial class MainWindow : Window {
     protected override void OnTextInput(TextInputEventArgs e) {
         base.OnTextInput(e);
         
-        // Фіча "Type-to-Edit"
         if (!string.IsNullOrEmpty(e.Text) && 
             _anchorRowIndex != -1 && 
             _anchorColIndex != -1 && 
             DataContext is MainWindowViewModel vm) {
             
-            // 1. Рахуємо центр активної клітинки
             var rect = GetCellRect(_anchorRowIndex, _anchorColIndex, vm);
             var centerPoint = new Point(rect.X + rect.Width / 2, rect.Y + rect.Height / 2);
             
-            // 2. Входимо в режим редагування в цій точці
             var textBox = EnterEditMode(CellPanel, centerPoint);
             
-            // 3. Якщо успішно, записуємо текст
             if (textBox != null) {
                 textBox.Text = e.Text;
                 textBox.CaretIndex = e.Text.Length;
@@ -95,6 +90,9 @@ public partial class MainWindow : Window {
             var (r, c) = GetRowColumnAt(absX, absY, vm);
             
             if (r != -1 && c != -1) {
+                // ВАЖЛИВО: Забираємо фокус у будь-якого активного TextBox і передаємо його панелі.
+                panel.Focus();
+
                 if (r == _anchorRowIndex && c == _anchorColIndex) {
                     EnterEditMode(panel, e.GetPosition(panel));
                     return;
@@ -104,12 +102,11 @@ public partial class MainWindow : Window {
                 _lastSelectedRowIndex = r;
                 _lastSelectedColIndex = c;
                 
-                // Встановлюємо якір (Active Cell)
                 _anchorRowIndex = r;
                 _anchorColIndex = c;
                 
                 vm.StartSelection(r, c);
-                UpdateActiveCellVisual(vm); // Оновлюємо синю рамку
+                UpdateActiveCellVisual(vm);
                 
                 _capturedControl = panel;
                 e.Pointer.Capture(panel);
@@ -117,7 +114,6 @@ public partial class MainWindow : Window {
         }
     }
     
-    // Модифікований метод: повертає TextBox
     private TextBox? EnterEditMode(Control parentControl, Point point) {
         var hit = parentControl.InputHitTest(point);
         
@@ -148,7 +144,6 @@ public partial class MainWindow : Window {
             _targetColumn.Width = Math.Max(30, _targetColumn.Width + delta);
             _lastMousePosition = currentPosition;
             
-            // При ресайзі теж варто оновлювати рамку активної клітинки
             if (DataContext is MainWindowViewModel vm) UpdateActiveCellVisual(vm);
             
         } else if (_isResizingRow && _targetRow != null) {
@@ -196,7 +191,6 @@ public partial class MainWindow : Window {
         }
     }
     
-    // Новий метод для малювання синьої рамки навколо активної клітинки
     private void UpdateActiveCellVisual(MainWindowViewModel vm) {
         if (_anchorRowIndex == -1 || _anchorColIndex == -1) {
             ActiveCellBorder.IsVisible = false;
@@ -212,7 +206,6 @@ public partial class MainWindow : Window {
         ActiveCellBorder.IsVisible = true;
     }
 
-    // Допоміжний метод для розрахунку позиції клітинки
     private Rect GetCellRect(int rowIdx, int colIdx, MainWindowViewModel vm) {
         double x = 0;
         for (int i = 0; i < colIdx && i < vm.ColumnHeaders.Count; i++) {
