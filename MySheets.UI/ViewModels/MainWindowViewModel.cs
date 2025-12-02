@@ -18,6 +18,12 @@ public partial class MainWindowViewModel : ObservableObject {
     [ObservableProperty] private double _selectionHeight;
     [ObservableProperty] private bool _isSelectionVisible;
     
+    [ObservableProperty] private double _refSelectionX;
+    [ObservableProperty] private double _refSelectionY;
+    [ObservableProperty] private double _refSelectionWidth;
+    [ObservableProperty] private double _refSelectionHeight;
+    [ObservableProperty] private bool _isRefSelectionVisible;
+    
     [ObservableProperty] private CellViewModel? _selectedCell;
 
     public ObservableCollection<ColumnViewModel> ColumnHeaders { get; }
@@ -43,6 +49,26 @@ public partial class MainWindowViewModel : ObservableObject {
             }
             Rows.Add(new RowViewModel(rowCells, r + 1));
         }
+    }
+
+    public void ShowRefSelection(int row, int col) {
+        double x = 0;
+        double y = 0;
+        double w = ColumnHeaders[col].Width;
+        double h = Rows[row].Height;
+
+        for (int c = 0; c < col; c++) x += ColumnHeaders[c].Width;
+        for (int r = 0; r < row; r++) y += Rows[r].Height;
+
+        RefSelectionX = x;
+        RefSelectionY = y;
+        RefSelectionWidth = w;
+        RefSelectionHeight = h;
+        IsRefSelectionVisible = true;
+    }
+
+    public void HideRefSelection() {
+        IsRefSelectionVisible = false;
     }
 
     public void StartSelection(int row, int col) {
@@ -72,21 +98,10 @@ public partial class MainWindowViewModel : ObservableObject {
         double w = 0;
         double h = 0;
 
-        for (int c = 0; c < startC; c++) {
-            x += ColumnHeaders[c].Width;
-        }
-
-        for (int r = 0; r < startR; r++) {
-            y += Rows[r].Height;
-        }
-
-        for (int c = startC; c <= endC; c++) {
-            w += ColumnHeaders[c].Width;
-        }
-
-        for (int r = startR; r <= endR; r++) {
-            h += Rows[r].Height;
-        }
+        for (int c = 0; c < startC; c++) x += ColumnHeaders[c].Width;
+        for (int r = 0; r < startR; r++) y += Rows[r].Height;
+        for (int c = startC; c <= endC; c++) w += ColumnHeaders[c].Width;
+        for (int r = startR; r <= endR; r++) h += Rows[r].Height;
 
         SelectionX = x;
         SelectionY = y;
@@ -98,20 +113,16 @@ public partial class MainWindowViewModel : ObservableObject {
     private void AddRow() {
         int rowIndex = Rows.Count;
         var rowCells = new List<CellViewModel>();
-        
         for (int c = 0; c < ColumnHeaders.Count; c++) {
             var cellModel = _sheet.GetCell(rowIndex, c);
             rowCells.Add(new CellViewModel(cellModel, _sheet, ColumnHeaders[c]));
         }
-        
         Rows.Add(new RowViewModel(rowCells, rowIndex + 1));
     }
 
     [RelayCommand]
     private void RemoveRow() {
-        if (Rows.Count > 0) {
-            Rows.RemoveAt(Rows.Count - 1);
-        }
+        if (Rows.Count > 0) Rows.RemoveAt(Rows.Count - 1);
     }
 
     [RelayCommand]
@@ -119,7 +130,6 @@ public partial class MainWindowViewModel : ObservableObject {
         int colIndex = ColumnHeaders.Count;
         var newColumn = new ColumnViewModel(GetColumnName(colIndex));
         ColumnHeaders.Add(newColumn);
-
         for (int r = 0; r < Rows.Count; r++) {
             var cellModel = _sheet.GetCell(r, colIndex);
             Rows[r].Cells.Add(new CellViewModel(cellModel, _sheet, newColumn));
@@ -131,16 +141,13 @@ public partial class MainWindowViewModel : ObservableObject {
         if (ColumnHeaders.Count > 0) {
             int lastColIndex = ColumnHeaders.Count - 1;
             ColumnHeaders.RemoveAt(lastColIndex);
-
             foreach (var row in Rows) {
-                if (row.Cells.Count > 0) {
-                    row.Cells.RemoveAt(row.Cells.Count - 1);
-                }
+                if (row.Cells.Count > 0) row.Cells.RemoveAt(row.Cells.Count - 1);
             }
         }
     }
 
-    private static string GetColumnName(int index) {
+    public static string GetColumnName(int index) {
         int dividend = index + 1;
         string columnName = string.Empty;
         while (dividend > 0) {

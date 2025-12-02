@@ -40,8 +40,10 @@
                 <TextBlock Text="MySheets" Foreground="#666666" FontWeight="SemiBold" VerticalAlignment="Center"/>
                 <Border Width="1" Height="20" Background="#C0C0C0"/>
                 <TextBlock Text="fx" FontFamily="Times New Roman" FontStyle="Italic" FontWeight="Bold" VerticalAlignment="Center" Foreground="#666666"/>
-                <TextBox Width="300" 
+                <TextBox x:Name="FormulaBar"
+                         Width="300" 
                          Text="{Binding SelectedCell.Expression}" 
+                         GotFocus="OnFormulaBarGotFocus"
                          VerticalAlignment="Center"
                          Height="26"
                          BorderThickness="0"
@@ -152,7 +154,19 @@
                                 Canvas.Top="{Binding SelectionY}" 
                                 Width="{Binding SelectionWidth}" 
                                 Height="{Binding SelectionHeight}"/>
-                                
+                        
+                        <Rectangle Stroke="#F29900" 
+                                   StrokeThickness="2" 
+                                   Fill="Transparent"
+                                   RadiusX="2"
+                                   RadiusY="2"
+                                   IsVisible="{Binding IsRefSelectionVisible}"
+                                   StrokeDashArray="4,2"
+                                   Canvas.Left="{Binding RefSelectionX}"
+                                   Canvas.Top="{Binding RefSelectionY}"
+                                   Width="{Binding RefSelectionWidth}"
+                                   Height="{Binding RefSelectionHeight}"/>
+
                         <Border x:Name="ActiveCellBorder"
                                 BorderBrush="#1A73E8" 
                                 BorderThickness="2" 
@@ -168,7 +182,6 @@
                     <Button Classes="round" Content="-" Command="{Binding RemoveRowCommand}" ToolTip.Tip="Remove Last Row"/>
                 </StackPanel>
             </Border>
-
             <Border Grid.Row="2" Grid.Column="2" Background="#F0F0F0"/>
         </Grid>
     </DockPanel>
