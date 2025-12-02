@@ -9,6 +9,14 @@ using MySheets.Core.Models;
 
 public partial class MainWindowViewModel : ObservableObject {
     private readonly Worksheet _sheet;
+    private int _anchorRow;
+    private int _anchorCol;
+
+    [ObservableProperty] private double _selectionX;
+    [ObservableProperty] private double _selectionY;
+    [ObservableProperty] private double _selectionWidth;
+    [ObservableProperty] private double _selectionHeight;
+    [ObservableProperty] private bool _isSelectionVisible;
 
     public ObservableCollection<ColumnViewModel> ColumnHeaders { get; }
     public ObservableCollection<RowViewModel> Rows { get; }
@@ -33,6 +41,50 @@ public partial class MainWindowViewModel : ObservableObject {
             }
             Rows.Add(new RowViewModel(rowCells, r + 1));
         }
+    }
+
+    public void StartSelection(int row, int col) {
+        _anchorRow = row;
+        _anchorCol = col;
+        IsSelectionVisible = true;
+        UpdateSelectionGeometry(row, col);
+    }
+
+    public void UpdateSelection(int row, int col) {
+        UpdateSelectionGeometry(row, col);
+    }
+
+    private void UpdateSelectionGeometry(int currentRow, int currentCol) {
+        int startR = Math.Min(_anchorRow, currentRow);
+        int endR = Math.Max(_anchorRow, currentRow);
+        int startC = Math.Min(_anchorCol, currentCol);
+        int endC = Math.Max(_anchorCol, currentCol);
+
+        double x = 0;
+        double y = 0;
+        double w = 0;
+        double h = 0;
+
+        for (int c = 0; c < startC; c++) {
+            x += ColumnHeaders[c].Width;
+        }
+
+        for (int r = 0; r < startR; r++) {
+            y += Rows[r].Height;
+        }
+
+        for (int c = startC; c <= endC; c++) {
+            w += ColumnHeaders[c].Width;
+        }
+
+        for (int r = startR; r <= endR; r++) {
+            h += Rows[r].Height;
+        }
+
+        SelectionX = x;
+        SelectionY = y;
+        SelectionWidth = w;
+        SelectionHeight = h;
     }
 
     [RelayCommand]

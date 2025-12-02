@@ -27,161 +27,122 @@
             <Setter Property="Foreground" Value="#333333"/>
             <Setter Property="FontSize" Value="10"/>
             <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="Margin" Value="1"/> </Style>
+            <Setter Property="Margin" Value="1"/> 
+        </Style>
         <Style Selector="Button.round:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#E0E0E0"/>
         </Style>
     </Window.Styles>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="40"/>      <ColumnDefinition Width="*"/>       <ColumnDefinition Width="Auto"/>    </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="25"/>        <RowDefinition Height="*"/>         <RowDefinition Height="Auto"/>      </Grid.RowDefinitions>
-
-        <Border Grid.Row="0" Grid.Column="0" 
-                Background="#F8F9FA" 
-                BorderBrush="#C0C0C0" 
-                BorderThickness="0,0,1,1" 
-                ZIndex="10"/>
-
-        <ScrollViewer Grid.Row="0" Grid.Column="1" 
-                      x:Name="ColHeaderScrollViewer"
-                      HorizontalScrollBarVisibility="Hidden" 
-                      VerticalScrollBarVisibility="Disabled">
-            <ItemsControl ItemsSource="{Binding ColumnHeaders}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Horizontal"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Panel Width="{Binding Width}">
-                            <Border BorderBrush="#C0C0C0" 
-                                    BorderThickness="0,0,1,1" 
-                                    Background="#F8F9FA">
-                                <TextBlock Text="{Binding Header}" 
-                                           HorizontalAlignment="Center" 
-                                           VerticalAlignment="Center" 
-                                           FontWeight="SemiBold" 
-                                           Foreground="#333333"/>
-                            </Border>
-                            <Border Width="5" 
-                                    HorizontalAlignment="Right" 
-                                    Background="Transparent" 
-                                    Cursor="SizeWestEast"
-                                    Tag="{Binding}"
-                                    PointerPressed="OnColumnHeaderPressed"/>
-                        </Panel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
-
-        <Border Grid.Row="0" Grid.Column="2" 
-                Grid.RowSpan="2" 
-                Background="#F0F0F0" 
-                BorderBrush="#C0C0C0" 
-                BorderThickness="0,0,0,1"
-                Padding="2,2,2,0"
-                VerticalAlignment="Stretch">
-            <StackPanel Orientation="Vertical" VerticalAlignment="Top" Spacing="2">
-                <Button Classes="round" Content="+" Command="{Binding AddColumnCommand}" ToolTip.Tip="Add Column"/>
-                <Button Classes="round" Content="-" Command="{Binding RemoveColumnCommand}" ToolTip.Tip="Remove Last Column"/>
+    <DockPanel LastChildFill="True">
+        <Border DockPanel.Dock="Top" Height="40" Background="#F0F0F0" BorderBrush="#C0C0C0" BorderThickness="0,0,0,1" Padding="10,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+                <TextBlock Text="MySheets Toolbar" Foreground="#666666" FontWeight="SemiBold" VerticalAlignment="Center"/>
             </StackPanel>
         </Border>
 
-        <ScrollViewer Grid.Row="1" Grid.Column="0" 
-                      x:Name="RowHeaderScrollViewer"
-                      HorizontalScrollBarVisibility="Disabled" 
-                      VerticalScrollBarVisibility="Hidden">
-            <ItemsControl ItemsSource="{Binding Rows}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Vertical"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:RowViewModel">
-                        <Panel Height="{Binding Height}">
-                            <Border Background="#F8F9FA" 
-                                    BorderBrush="#C0C0C0" 
-                                    BorderThickness="0,0,1,1">
-                                <TextBlock Text="{Binding Header}" 
-                                           HorizontalAlignment="Center" 
-                                           VerticalAlignment="Center" 
-                                           Foreground="#333333" 
-                                           FontSize="12"/>
-                            </Border>
-                            <Border Height="5" 
-                                    VerticalAlignment="Bottom" 
-                                    Background="Transparent" 
-                                    Cursor="SizeNorthSouth"
-                                    Tag="{Binding}"
-                                    PointerPressed="OnRowHeaderPressed"/>
-                        </Panel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40"/> <ColumnDefinition Width="*"/> <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="25"/> <RowDefinition Height="*"/> <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <ScrollViewer Grid.Row="1" Grid.Column="1" 
-                      x:Name="MainScrollViewer"
-                      HorizontalScrollBarVisibility="Auto" 
-                      VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding Rows}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Orientation="Vertical"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:RowViewModel">
-                        <ItemsControl ItemsSource="{Binding Cells}" Height="{Binding Height}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="vm:CellViewModel">
-                                    <Border BorderBrush="#D9D9D9" 
-                                            BorderThickness="0,0,1,1" 
-                                            Width="{Binding Column.Width}" 
-                                            Background="White">
-                                        <TextBox Text="{Binding Expression}" 
-                                                 ToolTip.Tip="{Binding Value}" 
-                                                 Background="Transparent" 
-                                                 BorderThickness="0" 
-                                                 CornerRadius="0" 
-                                                 Padding="6,3" 
-                                                 FontSize="12" 
-                                                 HorizontalAlignment="Stretch" 
-                                                 VerticalAlignment="Stretch"/>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
-        
-        <Border Grid.Row="2" Grid.Column="0" 
-                Grid.ColumnSpan="2"
-                Background="#F0F0F0" 
-                BorderBrush="#C0C0C0" 
-                BorderThickness="0,0,1,0"
-                Padding="2,2,0,2"
-                HorizontalAlignment="Stretch">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="2">
-                <Button Classes="round" Content="+" Command="{Binding AddRowCommand}" ToolTip.Tip="Add Row"/>
-                <Button Classes="round" Content="-" Command="{Binding RemoveRowCommand}" ToolTip.Tip="Remove Last Row"/>
-            </StackPanel>
-        </Border>
+            <Border Grid.Row="0" Grid.Column="0" Background="#F8F9FA" BorderBrush="#C0C0C0" BorderThickness="0,0,1,1" ZIndex="10"/>
 
-        <Border Grid.Row="2" Grid.Column="2" Background="#F0F0F0"/>
+            <ScrollViewer Grid.Row="0" Grid.Column="1" x:Name="ColHeaderScrollViewer" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding ColumnHeaders}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Panel Width="{Binding Width}">
+                                <Border BorderBrush="#C0C0C0" BorderThickness="0,0,1,1" Background="#F8F9FA">
+                                    <TextBlock Text="{Binding Header}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#333333"/>
+                                </Border>
+                                <Border Width="5" HorizontalAlignment="Right" Background="Transparent" Cursor="SizeWestEast" Tag="{Binding}" PointerPressed="OnColumnHeaderPressed"/>
+                            </Panel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
 
-    </Grid>
+            <Border Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Background="#F0F0F0" BorderBrush="#C0C0C0" BorderThickness="0,0,0,1" Padding="2,2,2,0" VerticalAlignment="Stretch">
+                <StackPanel Orientation="Vertical" VerticalAlignment="Top" Spacing="2">
+                    <Button Classes="round" Content="+" Command="{Binding AddColumnCommand}" ToolTip.Tip="Add Column"/>
+                    <Button Classes="round" Content="-" Command="{Binding RemoveColumnCommand}" ToolTip.Tip="Remove Last Column"/>
+                </StackPanel>
+            </Border>
+
+            <ScrollViewer Grid.Row="1" Grid.Column="0" x:Name="RowHeaderScrollViewer" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Hidden">
+                <ItemsControl ItemsSource="{Binding Rows}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><StackPanel Orientation="Vertical"/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RowViewModel">
+                            <Panel Height="{Binding Height}">
+                                <Border Background="#F8F9FA" BorderBrush="#C0C0C0" BorderThickness="0,0,1,1">
+                                    <TextBlock Text="{Binding Header}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#333333" FontSize="12"/>
+                                </Border>
+                                <Border Height="5" VerticalAlignment="Bottom" Background="Transparent" Cursor="SizeNorthSouth" Tag="{Binding}" PointerPressed="OnRowHeaderPressed"/>
+                            </Panel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <ScrollViewer Grid.Row="1" Grid.Column="1" x:Name="MainScrollViewer" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <!-- PANEL: Background Transparent is crucial for catching clicks -->
+                <Panel Background="Transparent" PointerPressed="OnMainPointerPressed">
+                    <ItemsControl ItemsSource="{Binding Rows}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><StackPanel Orientation="Vertical"/></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RowViewModel">
+                                <ItemsControl ItemsSource="{Binding Cells}" Height="{Binding Height}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:CellViewModel">
+                                            <Border BorderBrush="#D9D9D9" BorderThickness="0,0,1,1" Width="{Binding Column.Width}" Background="White">
+                                                <TextBox x:Name="CellEditor"
+                                                         Text="{Binding Expression}" 
+                                                         IsHitTestVisible="False" 
+                                                         LostFocus="OnCellEditorLostFocus"
+                                                         Background="Transparent" 
+                                                         BorderThickness="0" 
+                                                         CornerRadius="0" 
+                                                         Padding="6,3" 
+                                                         FontSize="12" 
+                                                         HorizontalAlignment="Stretch" 
+                                                         VerticalAlignment="Stretch"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Canvas IsHitTestVisible="False">
+                        <Border BorderBrush="#107C41" BorderThickness="2" Background="#33107C41" IsVisible="{Binding IsSelectionVisible}" Canvas.Left="{Binding SelectionX}" Canvas.Top="{Binding SelectionY}" Width="{Binding SelectionWidth}" Height="{Binding SelectionHeight}"/>
+                    </Canvas>
+                </Panel>
+            </ScrollViewer>
+            
+            <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Background="#F0F0F0" BorderBrush="#C0C0C0" BorderThickness="0,0,1,0" Padding="2,2,0,2" HorizontalAlignment="Stretch">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="2">
+                    <Button Classes="round" Content="+" Command="{Binding AddRowCommand}" ToolTip.Tip="Add Row"/>
+                    <Button Classes="round" Content="-" Command="{Binding RemoveRowCommand}" ToolTip.Tip="Remove Last Row"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2" Grid.Column="2" Background="#F0F0F0"/>
+        </Grid>
+    </DockPanel>
 </Window>
