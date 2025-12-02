@@ -32,12 +32,32 @@
         <Style Selector="Button.round:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#E0E0E0"/>
         </Style>
+        <Style Selector="Button.menu">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="Button.menu:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#E0E0E0"/>
+        </Style>
     </Window.Styles>
 
     <DockPanel LastChildFill="True">
-        <Border DockPanel.Dock="Top" Height="40" Background="#F0F0F0" BorderBrush="#C0C0C0" BorderThickness="0,0,0,1" Padding="10,0">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
-                <TextBlock Text="MySheets" Foreground="#666666" FontWeight="SemiBold" VerticalAlignment="Center"/>
+        <Border DockPanel.Dock="Top" Height="40" Background="#F0F0F0" BorderBrush="#C0C0C0" BorderThickness="0,0,0,1" Padding="0,0,10,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="5">
+                
+                <Button Classes="menu" Content="File">
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuItem Header="Open" Click="OnOpenFileClick"/>
+                            <MenuItem Header="Save" Click="OnSaveFileClick"/>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+
+                <TextBlock Text="MySheets" Foreground="#666666" FontWeight="SemiBold" VerticalAlignment="Center" Margin="5,0"/>
                 <Border Width="1" Height="20" Background="#C0C0C0"/>
                 <TextBlock Text="fx" FontFamily="Times New Roman" FontStyle="Italic" FontWeight="Bold" VerticalAlignment="Center" Foreground="#666666"/>
                 <TextBox x:Name="FormulaBar"

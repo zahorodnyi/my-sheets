@@ -6,9 +6,11 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MySheets.Core.Models;
+using MySheets.Core.Services;
 
 public partial class MainWindowViewModel : ObservableObject {
     private readonly Worksheet _sheet;
+    private readonly FileService _fileService;
     private int _anchorRow;
     private int _anchorCol;
 
@@ -31,6 +33,7 @@ public partial class MainWindowViewModel : ObservableObject {
 
     public MainWindowViewModel() {
         _sheet = new Worksheet();
+        _fileService = new FileService();
         ColumnHeaders = new ObservableCollection<ColumnViewModel>();
         Rows = new ObservableCollection<RowViewModel>();
 
@@ -48,6 +51,32 @@ public partial class MainWindowViewModel : ObservableObject {
                 rowCells.Add(new CellViewModel(cellModel, _sheet, ColumnHeaders[c]));
             }
             Rows.Add(new RowViewModel(rowCells, r + 1));
+        }
+
+        _sheet.CellStateChanged += OnCellStateChanged;
+    }
+
+    private void OnCellStateChanged(int row, int col) {
+        if (row < Rows.Count && col < Rows[row].Cells.Count) {
+            var vm = Rows[row].Cells[col];
+            vm.Refresh();
+        }
+    }
+
+    public void SaveData(string path) {
+        _fileService.Save(path, _sheet.Cells);
+    }
+
+    public void LoadData(string path) {
+        var data = _fileService.Load(path);
+        _sheet.Clear();
+        
+        foreach (var cellDto in data) {
+            _sheet.SetCell(cellDto.Row, cellDto.Col, cellDto.Expression);
+        }
+        
+        if (SelectedCell != null) {
+            SelectedCell = Rows[SelectedCell.Row].Cells[SelectedCell.Col]; 
         }
     }
 

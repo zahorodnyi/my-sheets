@@ -5,6 +5,8 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using MySheets.UI.ViewModels;
+using Avalonia.Platform.Storage;
+using MySheets.UI.ViewModels;
 
 namespace MySheets.UI.Views;
 
@@ -301,4 +303,39 @@ public partial class MainWindow : Window {
         if (rowIndex == -1 && y >= currentY && vm.Rows.Count > 0) rowIndex = vm.Rows.Count - 1;
         return (rowIndex, colIndex);
     }
+    
+    private async void OnOpenFileClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) {
+        var topLevel = Avalonia.Controls.TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+
+        var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {
+            Title = "Open Spreadsheet",
+            AllowMultiple = false,
+            FileTypeFilter = new[] {
+                new FilePickerFileType("JSON Files") { Patterns = new[] { "*.json" } }
+            }
+        });
+
+        if (files.Count >= 1 && DataContext is MainWindowViewModel vm) {
+            vm.LoadData(files[0].Path.LocalPath);
+        }
+    }
+
+    private async void OnSaveFileClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e) {
+        var topLevel = Avalonia.Controls.TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+
+        var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
+            Title = "Save Spreadsheet",
+            DefaultExtension = "json",
+            FileTypeChoices = new[] {
+                new FilePickerFileType("JSON Files") { Patterns = new[] { "*.json" } }
+            }
+        });
+
+        if (file != null && DataContext is MainWindowViewModel vm) {
+            vm.SaveData(file.Path.LocalPath);
+        }
+    }
+    
 }

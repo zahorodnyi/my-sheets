@@ -38,4 +38,10 @@ public class CellViewModel : ObservableObject {
     }
 
     public object Value => _model.Value;
+    
+    public void Refresh() {
+        OnPropertyChanged(nameof(Value));
+        OnPropertyChanged(nameof(Expression));
+    }
+    
 }

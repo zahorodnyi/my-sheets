@@ -8,9 +8,16 @@ public class Worksheet {
     private readonly Dictionary<(int Row, int Col), Cell> _cells = new();
     private readonly FormulaEvaluator _evaluator = new();
     
-    public DependencyGraph DependencyGraph { get; } = new();
+    public DependencyGraph DependencyGraph { get; private set; } = new();
     
     public event Action<int, int>? CellStateChanged;
+
+    public IEnumerable<Cell> Cells => _cells.Values;
+
+    public void Clear() {
+        _cells.Clear();
+        DependencyGraph = new DependencyGraph();
+    }
 
     public Cell GetCell(int row, int col) {
         var key = (row, col);
