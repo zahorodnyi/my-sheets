@@ -148,5 +148,19 @@
                 </Canvas>
             </Panel>
         </ScrollViewer>
+
+        <Grid x:Name="ValidationPopup" Grid.RowSpan="2" Grid.ColumnSpan="3" Background="#50000000" IsVisible="False">
+            <Border Background="White" BorderBrush="#C0C0C0" BorderThickness="1" CornerRadius="4" 
+                    HorizontalAlignment="Center" VerticalAlignment="Center" 
+                    Padding="20" MinWidth="300" BoxShadow="0 4 10 0 #40000000">
+                <StackPanel Spacing="15">
+                    <TextBlock Text="⚠️ Invalid Formula" FontWeight="Bold" FontSize="16" Foreground="#D93025"/>
+                    <TextBlock Text="It looks like your formula is invalid. Please try changing it." 
+                               TextWrapping="Wrap" FontSize="14" Foreground="#333333"/>
+                    <Button Content="OK" HorizontalAlignment="Right" Click="OnValidationOkClick"
+                            Background="#1A73E8" Foreground="White" Padding="15,6" CornerRadius="4"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>

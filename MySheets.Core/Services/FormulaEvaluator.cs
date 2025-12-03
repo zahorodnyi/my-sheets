@@ -4,7 +4,7 @@ using System.Text;
 namespace MySheets.Core.Services;
 
 public class FormulaEvaluator {
-    public object Evaluate(string expression, Func<string, double> getVariableValue) {
+    public object Evaluate(string expression, Func<string, object> getVariableValue) {
         if (string.IsNullOrEmpty(expression)) return string.Empty;
         
         if (expression.StartsWith('=')) {
@@ -83,8 +83,8 @@ public class FormulaEvaluator {
         return output;
     }
 
-    private double EvaluateRPN(Queue<string> tokens, Func<string, double> getVariableValue) {
-        var stack = new Stack<double>();
+    private object EvaluateRPN(Queue<string> tokens, Func<string, object> getVariableValue) {
+        var stack = new Stack<object>();
 
         while (tokens.Count > 0) {
             var token = tokens.Dequeue();
@@ -92,12 +92,19 @@ public class FormulaEvaluator {
             if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out double value)) {
                 stack.Push(value);
             } else if (IsIdentifier(token)) {
-                stack.Push(getVariableValue(token));
+                var val = getVariableValue(token);
+                stack.Push(val);
             } else {
                 if (stack.Count < 2) throw new InvalidOperationException("Invalid expression");
                 
-                var right = stack.Pop();
-                var left = stack.Pop();
+                var rightObj = stack.Pop();
+                var leftObj = stack.Pop();
+
+                if (IsCycleError(leftObj)) { stack.Push("#CYCLE!"); continue; }
+                if (IsCycleError(rightObj)) { stack.Push("#CYCLE!"); continue; }
+
+                double right = Convert.ToDouble(rightObj, CultureInfo.InvariantCulture);
+                double left = Convert.ToDouble(leftObj, CultureInfo.InvariantCulture);
 
                 switch (token) {
                     case "+": stack.Push(left + right); break;
@@ -115,6 +122,10 @@ public class FormulaEvaluator {
         if (stack.Count != 1) throw new InvalidOperationException("Invalid expression");
 
         return stack.Pop();
+    }
+
+    private bool IsCycleError(object obj) {
+        return obj is string s && s == "#CYCLE!";
     }
 
     private bool IsIdentifier(string token) {

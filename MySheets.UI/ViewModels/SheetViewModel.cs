@@ -177,4 +177,8 @@ public partial class SheetViewModel : ObservableObject {
             }
         }
     }
+    
+    public bool ValidateFormula(string formula) {
+        return Worksheet.IsFormulaValid(formula);
+    }
 }

@@ -29,26 +29,77 @@ public class Worksheet {
         return newCell;
     }
 
+    public bool IsFormulaValid(string formula) {
+        if (string.IsNullOrEmpty(formula) || !formula.StartsWith("=")) return true;
+        try {
+            var result = _evaluator.Evaluate(formula, _ => 1.0);
+            
+            if (result is string s && s == "#ERROR!") return false;
+            
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
     public void SetCell(int row, int col, string value) {
         DependencyGraph.ClearDependencies(row, col);
         var cell = GetCell(row, col);
         cell.Expression = value;
 
-        if (value.StartsWith("=")) {
-            foreach (var reference in CellReferenceUtility.ExtractReferences(value)) {
-                DependencyGraph.AddDependency(row, col, reference.Row, reference.Col);
-            }
-            cell.Value = _evaluator.Evaluate(value, GetCellValue);
-        } else {
-            if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out double numberResult)) {
-                cell.Value = numberResult;
-            } else {
-                cell.Value = value;
-            }
-        }
+        UpdateCellInternal(row, col, cell);
         
         CellStateChanged?.Invoke(row, col);
         Recalculate(row, col);
+        RecoverCyclicCells();
+    }
+
+    private void UpdateCellInternal(int row, int col, Cell cell) {
+        if (cell.Expression.StartsWith("=")) {
+            bool hasCycle = false;
+            List<(int, int)> cyclePath = new();
+
+            foreach (var reference in CellReferenceUtility.ExtractReferences(cell.Expression)) {
+                if (!DependencyGraph.TryAddDependency(row, col, reference.Row, reference.Col, out var path)) {
+                    hasCycle = true;
+                    cyclePath = path;
+                    break;
+                }
+            }
+
+            if (hasCycle) {
+                cell.Value = "#CYCLE!";
+                foreach (var (cRow, cCol) in cyclePath) {
+                    var cycleCell = GetCell(cRow, cCol);
+                    cycleCell.Value = "#CYCLE!";
+                    CellStateChanged?.Invoke(cRow, cCol);
+                }
+            } else {
+                cell.Value = _evaluator.Evaluate(cell.Expression, GetCellValue);
+            }
+        } else {
+            if (double.TryParse(cell.Expression, NumberStyles.Any, CultureInfo.InvariantCulture, out double numberResult)) {
+                cell.Value = numberResult;
+            } else {
+                cell.Value = cell.Expression;
+            }
+        }
+    }
+
+    private void RecoverCyclicCells() {
+        var cyclicCells = _cells.Values
+            .Where(c => c.Value is string s && s == "#CYCLE!")
+            .ToList();
+
+        foreach (var cell in cyclicCells) {
+            DependencyGraph.ClearDependencies(cell.Row, cell.Col);
+            UpdateCellInternal(cell.Row, cell.Col, cell);
+            
+            if (cell.Value is not string || (string)cell.Value != "#CYCLE!") {
+                CellStateChanged?.Invoke(cell.Row, cell.Col);
+                Recalculate(cell.Row, cell.Col);
+            }
+        }
     }
 
     private void Recalculate(int row, int col) {
@@ -57,26 +108,29 @@ public class Worksheet {
             
             if (cell.Type == CellType.Formula) {
                 cell.Value = _evaluator.Evaluate(cell.Expression, GetCellValue);
+                
                 CellStateChanged?.Invoke(dependent.Item1, dependent.Item2);
                 Recalculate(dependent.Item1, dependent.Item2);
             }
         }
     }
 
-    private double GetCellValue(string cellReference) {
+    private object GetCellValue(string cellReference) {
         try {
             var (row, col) = CellReferenceUtility.ParseReference(cellReference);
             var cell = GetCell(row, col);
             
+            if (cell.Value is string s && s == "#CYCLE!") return "#CYCLE!";
+
             if (cell.Value is double d) return d;
             if (cell.Value is int i) return i;
-            if (cell.Value == null) return 0;
+            if (cell.Value == null) return 0.0;
             
             if (double.TryParse(cell.Value.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double res)) {
                 return res;
             }
             
-            return 0; 
+            return 0.0; 
         } catch {
             throw new Exception("Invalid reference");
         }

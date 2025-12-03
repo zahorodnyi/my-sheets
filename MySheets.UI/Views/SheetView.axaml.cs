@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using MySheets.UI.ViewModels;
 
@@ -30,7 +31,7 @@ public partial class SheetView : UserControl {
     private int _lastInsertedRefIndex = -1;
     private int _lastInsertedRefLength = 0;
 
-    private readonly char[] _operators = new[] { '+', '-', '*', '/', '(', ')', '=', ',', ' ' };
+    private readonly char[] _operators = new[] { '+', '-', '*', '/', '(', ')', '=', ',', '&' };
 
     public SheetView() {
         InitializeComponent();
@@ -44,7 +45,6 @@ public partial class SheetView : UserControl {
         
         FloatingEditor.KeyDown += OnEditorKeyDown;
         FloatingEditor.LostFocus += OnEditorLostFocus;
-        FloatingEditor.PropertyChanged += OnFloatingEditorPropertyChanged;
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
@@ -52,9 +52,7 @@ public partial class SheetView : UserControl {
         if (MainWindow.GlobalFormulaBar != null) {
             MainWindow.GlobalFormulaBar.KeyDown += OnEditorKeyDown;
             MainWindow.GlobalFormulaBar.TextInput += OnEditorTextInput;
-            
             MainWindow.GlobalFormulaBar.GotFocus += OnGlobalBarGotFocus;
-            MainWindow.GlobalFormulaBar.PropertyChanged += OnGlobalBarPropertyChanged;
         }
     }
 
@@ -63,14 +61,13 @@ public partial class SheetView : UserControl {
         if (MainWindow.GlobalFormulaBar != null) {
             MainWindow.GlobalFormulaBar.KeyDown -= OnEditorKeyDown;
             MainWindow.GlobalFormulaBar.TextInput -= OnEditorTextInput;
-            
             MainWindow.GlobalFormulaBar.GotFocus -= OnGlobalBarGotFocus;
-            MainWindow.GlobalFormulaBar.PropertyChanged -= OnGlobalBarPropertyChanged;
         }
     }
 
-    
     private void OnGlobalBarGotFocus(object? sender, GotFocusEventArgs e) {
+        if (ValidationPopup.IsVisible) return;
+
         if (DataContext is SheetViewModel vm && vm.SelectedCell != null) {
             if (_anchorRowIndex != -1 && _anchorColIndex != -1) {
                 ActivateFloatingEditor(_anchorRowIndex, _anchorColIndex, vm, setFocus: false);
@@ -78,24 +75,9 @@ public partial class SheetView : UserControl {
         }
     }
 
-    private void OnGlobalBarPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
-        if (e.Property == TextBox.TextProperty && FloatingEditor.IsVisible) {
-            if (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused) {
-                 FloatingEditor.Text = MainWindow.GlobalFormulaBar.Text;
-            }
-        }
-    }
-
-    
-    private void OnFloatingEditorPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
-        if (e.Property == TextBox.TextProperty && FloatingEditor.IsVisible && _editingCellViewModel != null) {
-            if (FloatingEditor.IsFocused) {
-                _editingCellViewModel.Expression = FloatingEditor.Text ?? "";
-            }
-        }
-    }
-
     private void OnEditorTextInput(object? sender, TextInputEventArgs e) {
+        if (ValidationPopup.IsVisible) return;
+
         _isLastActionRefSelect = false;
         if (DataContext is SheetViewModel vm && vm.IsRefSelectionVisible) {
              vm.HideRefSelection();
@@ -103,18 +85,21 @@ public partial class SheetView : UserControl {
     }
 
     private void OnEditorKeyDown(object? sender, KeyEventArgs e) {
+        if (ValidationPopup.IsVisible) return;
+
         if (e.Key == Key.Enter) {
-             CommitEditor(); 
-             
-             this.Focus(); 
-             
-             e.Handled = true;
-             
-             if (DataContext is SheetViewModel vm && _anchorRowIndex != -1) {
-                 int nextRow = Math.Min(_anchorRowIndex + 1, vm.Rows.Count - 1);
-                 vm.StartSelection(nextRow, _anchorColIndex);
-                 _anchorRowIndex = nextRow;
-                 UpdateActiveCellVisual(vm);
+             if (TryCommitEditor()) { 
+                 this.Focus(); 
+                 e.Handled = true;
+                 
+                 if (DataContext is SheetViewModel vm && _anchorRowIndex != -1) {
+                     int nextRow = Math.Min(_anchorRowIndex + 1, vm.Rows.Count - 1);
+                     vm.StartSelection(nextRow, _anchorColIndex);
+                     _anchorRowIndex = nextRow;
+                     UpdateActiveCellVisual(vm);
+                 }
+             } else {
+                 e.Handled = true; 
              }
              return;
         }
@@ -124,17 +109,6 @@ public partial class SheetView : UserControl {
             e.Handled = true;
             return;
         }
-
-        if (e.KeyModifiers != KeyModifiers.None && (e.Key == Key.LeftShift || e.Key == Key.RightShift || e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl || e.Key == Key.LeftAlt || e.Key == Key.RightAlt)) {
-            return;
-        }
-
-        if (e.Key != Key.None) {
-             _isLastActionRefSelect = false;
-             if (DataContext is SheetViewModel vm && vm.IsRefSelectionVisible) {
-                 vm.HideRefSelection();
-             }
-        }
     }
 
     private TextBox? GetActiveEditor() {
@@ -143,15 +117,14 @@ public partial class SheetView : UserControl {
         var globalBar = MainWindow.GlobalFormulaBar;
         if (globalBar != null) {
             if (globalBar.IsFocused) return globalBar;
-            if (!FloatingEditor.IsVisible && globalBar.Text?.StartsWith("=") == true) {
-                 return globalBar;
-            }
+            if (FloatingEditor.IsVisible) return FloatingEditor;
         }
         return null;
     }
 
     protected override void OnTextInput(TextInputEventArgs e) {
         base.OnTextInput(e);
+        if (ValidationPopup.IsVisible) return;
         
         if (DataContext is SheetViewModel vm && vm.IsRefSelectionVisible) {
              _isLastActionRefSelect = false;
@@ -177,12 +150,10 @@ public partial class SheetView : UserControl {
     
     protected override void OnKeyDown(KeyEventArgs e) {
         base.OnKeyDown(e);
+        if (ValidationPopup.IsVisible) return;
         
-        var activeEditor = GetActiveEditor();
-        bool isEditing = (activeEditor != null && activeEditor.IsFocused);
-        if (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused) {
-            return;
-        }
+        bool isEditing = (FloatingEditor.IsVisible && FloatingEditor.IsFocused) || 
+                         (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused);
 
         if (!isEditing && !FloatingEditor.IsVisible && DataContext is SheetViewModel vm) {
              int r = _anchorRowIndex;
@@ -204,27 +175,9 @@ public partial class SheetView : UserControl {
         }
     }
 
-    private (int start, int length, string text) GetReferenceAtCaret(TextBox editor) {
-        string text = editor.Text ?? "";
-        int caret = editor.CaretIndex;
-        if (caret > text.Length) caret = text.Length;
-
-        int start = caret;
-        while (start > 0 && !_operators.Contains(text[start - 1])) start--;
-        
-        int end = caret;
-        while (end < text.Length && !_operators.Contains(text[end])) end++;
-        
-        if (end <= start) return (-1, 0, "");
-        
-        string potentialRef = text.Substring(start, end - start);
-        if (Regex.IsMatch(potentialRef, @"^[A-Za-z]+[0-9]+$")) {
-            return (start, potentialRef.Length, potentialRef);
-        }
-        return (-1, 0, "");
-    }
-
     private void OnCellPanelPointerPressed(object? sender, PointerPressedEventArgs e) {
+        if (ValidationPopup.IsVisible) { e.Handled = true; return; }
+
         var properties = e.GetCurrentPoint(this).Properties;
         if (!properties.IsLeftButtonPressed) return;
         if (_isResizingColumn || _isResizingRow) return;
@@ -241,61 +194,29 @@ public partial class SheetView : UserControl {
                 bool isSelfClick = (r == _anchorRowIndex && c == _anchorColIndex);
 
                 if (!isSelfClick && activeEditor != null && activeEditor.Text?.StartsWith("=") == true) {
-                    string colName = MainWindowViewModel.GetColumnName(c);
-                    string cellRef = $"{colName}{r + 1}";
-                    string currentText = activeEditor.Text ?? "";
-                    int caret = activeEditor.CaretIndex;
-
-                    bool isAfterOperator = false;
-                    if (caret > 0 && caret <= currentText.Length) {
-                        char charBefore = currentText[caret - 1];
-                        if (_operators.Contains(charBefore)) isAfterOperator = true;
-                    }
-
-                    if (isAfterOperator) _isLastActionRefSelect = false;
-
-                    if (!_isLastActionRefSelect && !isAfterOperator) {
-                        var existingRef = GetReferenceAtCaret(activeEditor);
-                        if (existingRef.length > 0) {
-                            _lastInsertedRefIndex = existingRef.start;
-                            _lastInsertedRefLength = existingRef.length;
-                            _isLastActionRefSelect = true;
+                    if (ShouldPickReference(activeEditor)) {
+                        string colName = MainWindowViewModel.GetColumnName(c);
+                        string cellRef = $"{colName}{r + 1}";
+                        InsertReferenceIntoEditor(activeEditor, cellRef);
+                        
+                        vm.ShowRefSelection(r, c);
+                        
+                        if (activeEditor == FloatingEditor) {
+                            activeEditor.Focus();
+                        } else if (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused) {
+                             MainWindow.GlobalFormulaBar.Focus();
                         }
+                        
+                        e.Handled = true; 
+                        return;
                     }
-
-                    if (_isLastActionRefSelect && _lastInsertedRefIndex != -1) {
-                         if (_lastInsertedRefIndex + _lastInsertedRefLength <= currentText.Length) {
-                             currentText = currentText.Remove(_lastInsertedRefIndex, _lastInsertedRefLength);
-                         } 
-                         else {
-                             _lastInsertedRefIndex = currentText.Length;
-                         }
-                         currentText = currentText.Insert(_lastInsertedRefIndex, cellRef);
-                         activeEditor.Text = currentText;
-                         _lastInsertedRefLength = cellRef.Length;
-                         activeEditor.CaretIndex = _lastInsertedRefIndex + _lastInsertedRefLength;
-                    } 
-                    else {
-                        caret = activeEditor.CaretIndex; 
-                        _lastInsertedRefIndex = caret;
-                        activeEditor.Text = currentText.Insert(caret, cellRef);
-                        _lastInsertedRefLength = cellRef.Length;
-                        activeEditor.CaretIndex = caret + cellRef.Length;
-                        _isLastActionRefSelect = true;
-                    }
-                    
-                    vm.ShowRefSelection(r, c);
-                    
-                    if (activeEditor == FloatingEditor) {
-                        activeEditor.Focus();
-                    } 
-                    
-                    e.Handled = true; 
-                    return;
                 }
                 
                 if (!isSelfClick) {
-                    CommitEditor();
+                    if (!TryCommitEditor()) {
+                        e.Handled = true; 
+                        return; 
+                    }
                 }
 
                 _isLastActionRefSelect = false;
@@ -324,6 +245,96 @@ public partial class SheetView : UserControl {
             }
         }
     }
+
+    private bool ShouldPickReference(TextBox editor) {
+        string text = editor.Text ?? "";
+        int caret = editor.CaretIndex;
+        
+        var existingRef = GetReferenceAtCaret(editor);
+        if (existingRef.length > 0) return true;
+
+        if (caret >= text.Length) {
+             if (text.Length == 0) return false;
+             char lastChar = text[text.Length - 1];
+             if (_operators.Contains(lastChar)) return true;
+             if (lastChar == '=') return true;
+             if (char.IsDigit(lastChar)) return false;
+             if (char.IsWhiteSpace(lastChar)) return false;
+             return false;
+        }
+
+        if (caret > 0) {
+            char charBefore = text[caret - 1];
+            if (_operators.Contains(charBefore) || charBefore == '=') return true;
+        }
+
+        return false;
+    }
+
+    private void InsertReferenceIntoEditor(TextBox activeEditor, string cellRef) {
+        string currentText = activeEditor.Text ?? "";
+        
+        if (_isLastActionRefSelect && _lastInsertedRefIndex != -1) {
+             if (_lastInsertedRefIndex + _lastInsertedRefLength <= currentText.Length) {
+                 currentText = currentText.Remove(_lastInsertedRefIndex, _lastInsertedRefLength);
+             } 
+             else {
+                 _lastInsertedRefIndex = currentText.Length;
+             }
+             currentText = currentText.Insert(_lastInsertedRefIndex, cellRef);
+             activeEditor.Text = currentText;
+             _lastInsertedRefLength = cellRef.Length;
+             activeEditor.CaretIndex = _lastInsertedRefIndex + _lastInsertedRefLength;
+        } 
+        else {
+            var existingRef = GetReferenceAtCaret(activeEditor);
+            if (existingRef.length > 0) {
+                currentText = currentText.Remove(existingRef.start, existingRef.length);
+                currentText = currentText.Insert(existingRef.start, cellRef);
+                activeEditor.Text = currentText;
+                
+                _lastInsertedRefIndex = existingRef.start;
+                _lastInsertedRefLength = cellRef.Length;
+                activeEditor.CaretIndex = existingRef.start + cellRef.Length;
+                _isLastActionRefSelect = true;
+            } else {
+                int caret = activeEditor.CaretIndex; 
+                _lastInsertedRefIndex = caret;
+                activeEditor.Text = currentText.Insert(caret, cellRef);
+                _lastInsertedRefLength = cellRef.Length;
+                activeEditor.CaretIndex = caret + cellRef.Length;
+                _isLastActionRefSelect = true;
+            }
+        }
+    }
+
+    private (int start, int length, string text) GetReferenceAtCaret(TextBox editor) {
+        string text = editor.Text ?? "";
+        int caret = editor.CaretIndex;
+        if (caret > text.Length) caret = text.Length;
+
+        int start = caret;
+        while (start > 0) {
+            char c = text[start - 1];
+            if (_operators.Contains(c) || char.IsWhiteSpace(c) || c == '=') break;
+            start--;
+        }
+        
+        int end = caret;
+        while (end < text.Length) {
+            char c = text[end];
+            if (_operators.Contains(c) || char.IsWhiteSpace(c) || c == '=') break;
+            end++;
+        }
+        
+        if (end <= start) return (-1, 0, "");
+        
+        string potentialRef = text.Substring(start, end - start);
+        if (Regex.IsMatch(potentialRef, @"^[A-Za-z]+[0-9]+$")) {
+            return (start, end - start, potentialRef);
+        }
+        return (-1, 0, "");
+    }
     
     private void ActivateFloatingEditor(int r, int c, SheetViewModel vm, bool setFocus) {
         if (r < 0 || r >= vm.Rows.Count) return;
@@ -345,6 +356,10 @@ public partial class SheetView : UserControl {
         FloatingEditor.Text = cell.Expression;
         FloatingEditor.IsVisible = true;
         
+        if (MainWindow.GlobalFormulaBar != null) {
+            MainWindow.GlobalFormulaBar.Text = cell.Expression;
+        }
+        
         if (setFocus) {
             FloatingEditor.Focus();
             FloatingEditor.CaretIndex = FloatingEditor.Text?.Length ?? 0;
@@ -353,39 +368,83 @@ public partial class SheetView : UserControl {
         _isLastActionRefSelect = false;
     }
 
-    private void CommitEditor() {
-        if (FloatingEditor.IsVisible && _editingCellViewModel != null) {
-            _editingCellViewModel.Expression = FloatingEditor.Text;
-            FloatingEditor.IsVisible = false;
+    private bool TryCommitEditor() {
+        if (!FloatingEditor.IsVisible && (MainWindow.GlobalFormulaBar == null || !MainWindow.GlobalFormulaBar.IsFocused)) {
+            return true;
+        }
+
+        string newExpression = FloatingEditor.IsVisible ? FloatingEditor.Text ?? "" : MainWindow.GlobalFormulaBar?.Text ?? "";
+
+        if (newExpression.StartsWith("=")) {
+            if (DataContext is SheetViewModel vm) {
+                if (!vm.ValidateFormula(newExpression)) {
+                    ShowValidationError();
+                    return false;
+                }
+            }
+        }
+
+        if (_editingCellViewModel != null) {
+            _editingCellViewModel.Expression = newExpression;
             _editingCellViewModel = null;
         }
-        else if (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused) {
-            this.Focus();
-        }
+
+        FloatingEditor.IsVisible = false;
+        return true;
     }
 
     private void CancelEditor() {
+        if (ValidationPopup.IsVisible) {
+            HideValidationError();
+            return;
+        }
+
         if (_editingCellViewModel != null) {
-            _editingCellViewModel.Expression = _originalExpression;
+            if (MainWindow.GlobalFormulaBar != null) {
+                MainWindow.GlobalFormulaBar.Text = _originalExpression;
+            }
             
             FloatingEditor.IsVisible = false;
             _editingCellViewModel = null;
             this.Focus();
         }
         else if (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused) {
+            MainWindow.GlobalFormulaBar.Text = _originalExpression;
             this.Focus();
         }
     }
 
     private void OnEditorLostFocus(object? sender, RoutedEventArgs e) {
-        if (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused) {
-            return;
+        if (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused) return;
+        
+        if (ValidationPopup.IsVisible) return;
+
+        if (FloatingEditor.IsVisible) {
+             TryCommitEditor();
         }
-        CommitEditor();
+    }
+
+    private void ShowValidationError() {
+        ValidationPopup.IsVisible = true;
+    }
+
+    private void HideValidationError() {
+        ValidationPopup.IsVisible = false;
+    }
+
+    private void OnValidationOkClick(object? sender, RoutedEventArgs e) {
+        HideValidationError();
+        
+        if (FloatingEditor.IsVisible) {
+            FloatingEditor.Focus();
+        } else if (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused) {
+            MainWindow.GlobalFormulaBar.Focus();
+        }
     }
 
     private void OnPointerMoved(object? sender, PointerEventArgs e) {
         if (DataContext is not SheetViewModel vm) return;
+        if (ValidationPopup.IsVisible) return;
 
         if (_isResizingColumn && _targetColumn != null) {
             var currentPosition = e.GetPosition(this);
@@ -426,7 +485,8 @@ public partial class SheetView : UserControl {
     }
     
     private void OnColumnHeaderPressed(object? sender, PointerPressedEventArgs e) {
-        CommitEditor();
+        if (ValidationPopup.IsVisible) return;
+        TryCommitEditor();
         if (sender is Border border && border.Tag is ColumnViewModel column) {
             _isResizingColumn = true;
             _targetColumn = column;
@@ -438,7 +498,8 @@ public partial class SheetView : UserControl {
     }
 
     private void OnRowHeaderPressed(object? sender, PointerPressedEventArgs e) {
-        CommitEditor();
+        if (ValidationPopup.IsVisible) return;
+        TryCommitEditor();
         if (sender is Border border && border.Tag is RowViewModel row) {
             _isResizingRow = true;
             _targetRow = row;
