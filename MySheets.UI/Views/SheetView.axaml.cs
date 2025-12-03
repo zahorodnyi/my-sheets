@@ -24,6 +24,7 @@ public partial class SheetView : UserControl {
     private int _anchorColIndex = -1;
 
     private CellViewModel? _editingCellViewModel;
+    private string _originalExpression = string.Empty;
     
     private bool _isLastActionRefSelect = false;
     private int _lastInsertedRefIndex = -1;
@@ -67,7 +68,7 @@ public partial class SheetView : UserControl {
             MainWindow.GlobalFormulaBar.PropertyChanged -= OnGlobalBarPropertyChanged;
         }
     }
-    
+
     
     private void OnGlobalBarGotFocus(object? sender, GotFocusEventArgs e) {
         if (DataContext is SheetViewModel vm && vm.SelectedCell != null) {
@@ -85,7 +86,7 @@ public partial class SheetView : UserControl {
         }
     }
 
-
+    
     private void OnFloatingEditorPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
         if (e.Property == TextBox.TextProperty && FloatingEditor.IsVisible && _editingCellViewModel != null) {
             if (FloatingEditor.IsFocused) {
@@ -331,6 +332,7 @@ public partial class SheetView : UserControl {
         var cell = row.Cells[c];
 
         _editingCellViewModel = cell;
+        _originalExpression = cell.Expression;
 
         var rect = GetCellRect(r, c, vm);
 
@@ -363,13 +365,15 @@ public partial class SheetView : UserControl {
     }
 
     private void CancelEditor() {
-        if (FloatingEditor.IsVisible) {
+        if (_editingCellViewModel != null) {
+            _editingCellViewModel.Expression = _originalExpression;
+            
             FloatingEditor.IsVisible = false;
             _editingCellViewModel = null;
             this.Focus();
         }
         else if (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused) {
-             this.Focus();
+            this.Focus();
         }
     }
 
