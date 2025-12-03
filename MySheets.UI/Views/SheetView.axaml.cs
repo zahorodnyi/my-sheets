@@ -26,10 +26,6 @@ public partial class SheetView : UserControl {
 
     private CellViewModel? _editingCellViewModel;
     private string _originalExpression = string.Empty;
-    
-    private bool _isLastActionRefSelect = false;
-    private int _lastInsertedRefIndex = -1;
-    private int _lastInsertedRefLength = 0;
 
     private readonly char[] _operators = new[] { '+', '-', '*', '/', '(', ')', '=', ',', '&' };
 
@@ -78,7 +74,6 @@ public partial class SheetView : UserControl {
     private void OnEditorTextInput(object? sender, TextInputEventArgs e) {
         if (ValidationPopup.IsVisible) return;
 
-        _isLastActionRefSelect = false;
         if (DataContext is SheetViewModel vm && vm.IsRefSelectionVisible) {
              vm.HideRefSelection();
         }
@@ -127,7 +122,6 @@ public partial class SheetView : UserControl {
         if (ValidationPopup.IsVisible) return;
         
         if (DataContext is SheetViewModel vm && vm.IsRefSelectionVisible) {
-             _isLastActionRefSelect = false;
              vm.HideRefSelection();
         }
 
@@ -177,6 +171,10 @@ public partial class SheetView : UserControl {
 
     private void OnCellPanelPointerPressed(object? sender, PointerPressedEventArgs e) {
         if (ValidationPopup.IsVisible) { e.Handled = true; return; }
+        
+        if (e.Source is Visual source && (FloatingEditor == source || FloatingEditor.IsVisualAncestorOf(source))) {
+            return;
+        }
 
         var properties = e.GetCurrentPoint(this).Properties;
         if (!properties.IsLeftButtonPressed) return;
@@ -194,20 +192,33 @@ public partial class SheetView : UserControl {
                 bool isSelfClick = (r == _anchorRowIndex && c == _anchorColIndex);
 
                 if (!isSelfClick && activeEditor != null && activeEditor.Text?.StartsWith("=") == true) {
-                    if (ShouldPickReference(activeEditor)) {
-                        string colName = MainWindowViewModel.GetColumnName(c);
-                        string cellRef = $"{colName}{r + 1}";
-                        InsertReferenceIntoEditor(activeEditor, cellRef);
-                        
-                        vm.ShowRefSelection(r, c);
-                        
-                        if (activeEditor == FloatingEditor) {
-                            activeEditor.Focus();
-                        } else if (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused) {
-                             MainWindow.GlobalFormulaBar.Focus();
+                    var (tokenType, start, length) = GetTokenContext(activeEditor);
+                    string colName = MainWindowViewModel.GetColumnName(c);
+                    string newRef = $"{colName}{r + 1}";
+
+                    if (tokenType == TokenType.Number) {
+                        if (!TryCommitEditor()) {
+                            e.Handled = true;
+                            return;
                         }
-                        
-                        e.Handled = true; 
+                    } else {
+                        if (tokenType == TokenType.Reference) {
+                            string currentText = activeEditor.Text ?? "";
+                            currentText = currentText.Remove(start, length);
+                            currentText = currentText.Insert(start, newRef);
+                            activeEditor.Text = currentText;
+                            activeEditor.CaretIndex = start + newRef.Length;
+                        } else {
+                            int caret = activeEditor.CaretIndex;
+                            string currentText = activeEditor.Text ?? "";
+                            currentText = currentText.Insert(caret, newRef);
+                            activeEditor.Text = currentText;
+                            activeEditor.CaretIndex = caret + newRef.Length;
+                        }
+
+                        vm.ShowRefSelection(r, c);
+                        activeEditor.Focus();
+                        e.Handled = true;
                         return;
                     }
                 }
@@ -219,9 +230,7 @@ public partial class SheetView : UserControl {
                     }
                 }
 
-                _isLastActionRefSelect = false;
                 vm.HideRefSelection();
-
                 this.Focus();
 
                 if (isSelfClick) {
@@ -246,94 +255,47 @@ public partial class SheetView : UserControl {
         }
     }
 
-    private bool ShouldPickReference(TextBox editor) {
+    private enum TokenType { None, Operator, Reference, Number }
+
+    private (TokenType type, int start, int length) GetTokenContext(TextBox editor) {
         string text = editor.Text ?? "";
         int caret = editor.CaretIndex;
-        
-        var existingRef = GetReferenceAtCaret(editor);
-        if (existingRef.length > 0) return true;
-
-        if (caret >= text.Length) {
-             if (text.Length == 0) return false;
-             char lastChar = text[text.Length - 1];
-             if (_operators.Contains(lastChar)) return true;
-             if (lastChar == '=') return true;
-             if (char.IsDigit(lastChar)) return false;
-             if (char.IsWhiteSpace(lastChar)) return false;
-             return false;
-        }
-
-        if (caret > 0) {
-            char charBefore = text[caret - 1];
-            if (_operators.Contains(charBefore) || charBefore == '=') return true;
-        }
-
-        return false;
-    }
-
-    private void InsertReferenceIntoEditor(TextBox activeEditor, string cellRef) {
-        string currentText = activeEditor.Text ?? "";
-        
-        if (_isLastActionRefSelect && _lastInsertedRefIndex != -1) {
-             if (_lastInsertedRefIndex + _lastInsertedRefLength <= currentText.Length) {
-                 currentText = currentText.Remove(_lastInsertedRefIndex, _lastInsertedRefLength);
-             } 
-             else {
-                 _lastInsertedRefIndex = currentText.Length;
-             }
-             currentText = currentText.Insert(_lastInsertedRefIndex, cellRef);
-             activeEditor.Text = currentText;
-             _lastInsertedRefLength = cellRef.Length;
-             activeEditor.CaretIndex = _lastInsertedRefIndex + _lastInsertedRefLength;
-        } 
-        else {
-            var existingRef = GetReferenceAtCaret(activeEditor);
-            if (existingRef.length > 0) {
-                currentText = currentText.Remove(existingRef.start, existingRef.length);
-                currentText = currentText.Insert(existingRef.start, cellRef);
-                activeEditor.Text = currentText;
-                
-                _lastInsertedRefIndex = existingRef.start;
-                _lastInsertedRefLength = cellRef.Length;
-                activeEditor.CaretIndex = existingRef.start + cellRef.Length;
-                _isLastActionRefSelect = true;
-            } else {
-                int caret = activeEditor.CaretIndex; 
-                _lastInsertedRefIndex = caret;
-                activeEditor.Text = currentText.Insert(caret, cellRef);
-                _lastInsertedRefLength = cellRef.Length;
-                activeEditor.CaretIndex = caret + cellRef.Length;
-                _isLastActionRefSelect = true;
-            }
-        }
-    }
-
-    private (int start, int length, string text) GetReferenceAtCaret(TextBox editor) {
-        string text = editor.Text ?? "";
-        int caret = editor.CaretIndex;
+        if (caret < 0) caret = 0;
         if (caret > text.Length) caret = text.Length;
 
-        int start = caret;
-        while (start > 0) {
-            char c = text[start - 1];
-            if (_operators.Contains(c) || char.IsWhiteSpace(c) || c == '=') break;
-            start--;
+        if (caret > 0 && caret <= text.Length) {
+            char prevChar = text[caret - 1];
+            
+            if (char.IsLetterOrDigit(prevChar)) {
+                int start = caret - 1;
+                while (start > 0 && char.IsLetterOrDigit(text[start - 1])) {
+                    start--;
+                }
+
+                int end = caret;
+                while (end < text.Length && char.IsLetterOrDigit(text[end])) {
+                    end++;
+                }
+
+                string token = text.Substring(start, end - start);
+                
+                if (Regex.IsMatch(token, @"^[0-9]+$")) {
+                    return (TokenType.Number, start, token.Length);
+                }
+                
+                if (Regex.IsMatch(token, @"^[A-Za-z]+[0-9]+$")) {
+                    return (TokenType.Reference, start, token.Length);
+                }
+
+                return (TokenType.None, start, token.Length);
+            }
+
+            if (_operators.Contains(prevChar)) {
+                return (TokenType.Operator, caret, 0);
+            }
         }
-        
-        int end = caret;
-        while (end < text.Length) {
-            char c = text[end];
-            if (_operators.Contains(c) || char.IsWhiteSpace(c) || c == '=') break;
-            end++;
-        }
-        
-        if (end <= start) return (-1, 0, "");
-        
-        string potentialRef = text.Substring(start, end - start);
-        if (Regex.IsMatch(potentialRef, @"^[A-Za-z]+[0-9]+$")) {
-            return (start, end - start, potentialRef);
-        }
-        return (-1, 0, "");
+
+        return (TokenType.Operator, caret, 0);
     }
     
     private void ActivateFloatingEditor(int r, int c, SheetViewModel vm, bool setFocus) {
@@ -364,8 +326,6 @@ public partial class SheetView : UserControl {
             FloatingEditor.Focus();
             FloatingEditor.CaretIndex = FloatingEditor.Text?.Length ?? 0;
         }
-        
-        _isLastActionRefSelect = false;
     }
 
     private bool TryCommitEditor() {
