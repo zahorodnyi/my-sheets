@@ -1,4 +1,5 @@
 using System;
+using System.Linq; 
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -26,6 +27,8 @@ public partial class SheetView : UserControl {
     private bool _isLastActionRefSelect = false;
     private int _lastInsertedRefIndex = -1;
     private int _lastInsertedRefLength = 0;
+
+    private readonly char[] _operators = new[] { '+', '-', '*', '/', '(', '=', ',' };
 
     public SheetView() {
         InitializeComponent();
@@ -60,6 +63,10 @@ public partial class SheetView : UserControl {
     }
 
     private void OnEditorKeyDown(object? sender, KeyEventArgs e) {
+        if (e.KeyModifiers != KeyModifiers.None && (e.Key == Key.LeftShift || e.Key == Key.RightShift || e.Key == Key.LeftCtrl || e.Key == Key.RightCtrl || e.Key == Key.LeftAlt || e.Key == Key.RightAlt)) {
+            return;
+        }
+
         if (e.Key != Key.None) {
              _isLastActionRefSelect = false;
              if (DataContext is SheetViewModel vm) vm.HideRefSelection();
@@ -71,7 +78,6 @@ public partial class SheetView : UserControl {
         
         var globalBar = MainWindow.GlobalFormulaBar;
         if (globalBar != null) {
-            
             if (globalBar.IsFocused || (_isLastActionRefSelect && globalBar.Text?.StartsWith("=") == true)) {
                 return globalBar;
             }
@@ -162,7 +168,20 @@ public partial class SheetView : UserControl {
                     string colName = MainWindowViewModel.GetColumnName(c);
                     string cellRef = $"{colName}{r + 1}";
                     string currentText = activeEditor.Text ?? "";
-                    
+                    int caret = activeEditor.CaretIndex;
+
+                    bool isAfterOperator = false;
+                    if (caret > 0 && caret <= currentText.Length) {
+                        char charBefore = currentText[caret - 1];
+                        if (_operators.Contains(charBefore)) {
+                            isAfterOperator = true;
+                        }
+                    }
+
+                    if (isAfterOperator) {
+                        _isLastActionRefSelect = false;
+                    }
+
                     if (_isLastActionRefSelect && _lastInsertedRefIndex != -1) {
                          if (_lastInsertedRefIndex + _lastInsertedRefLength <= currentText.Length) {
                              currentText = currentText.Remove(_lastInsertedRefIndex, _lastInsertedRefLength);
@@ -175,8 +194,10 @@ public partial class SheetView : UserControl {
                          _lastInsertedRefLength = cellRef.Length;
                          activeEditor.CaretIndex = _lastInsertedRefIndex + _lastInsertedRefLength;
 
-                    } else {
-                        int caret = activeEditor.CaretIndex;
+                    } 
+                    else {
+                        caret = activeEditor.CaretIndex; 
+                        
                         _lastInsertedRefIndex = caret;
                         activeEditor.Text = currentText.Insert(caret, cellRef);
                         _lastInsertedRefLength = cellRef.Length;
@@ -186,7 +207,7 @@ public partial class SheetView : UserControl {
                     }
                     
                     vm.ShowRefSelection(r, c);
-                  
+                    activeEditor.Focus();
                     e.Handled = true; 
                     return;
                 }
