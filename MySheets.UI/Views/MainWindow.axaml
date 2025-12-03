@@ -7,6 +7,7 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="MySheets.UI.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
+        x:Name="RootWindow"
         Title="MySheets.UI">
 
     <Design.DataContext>
@@ -43,8 +44,26 @@
             <Setter Property="Background" Value="#E0E0E0"/>
         </Style>
 
+        <Style Selector="Button.close">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#999999"/>
+            <Setter Property="Padding" Value="0,0,0,1"/>
+            <Setter Property="Margin" Value="5,0,0,0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="Button.close:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="#FFCDD2"/>
+            <Setter Property="Foreground" Value="#D32F2F"/>
+        </Style>
+
         <Style Selector="ListBoxItem">
-            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Padding" Value="10,5,5,5"/>
             <Setter Property="Margin" Value="0,0,2,0"/>
             <Setter Property="Background" Value="#F0F0F0"/>
             <Setter Property="BorderBrush" Value="#C0C0C0"/>
@@ -102,14 +121,30 @@
             </StackPanel>
         </Border>
 
-        <Border DockPanel.Dock="Bottom" Background="#F0F0F0" BorderBrush="#C0C0C0" BorderThickness="0,0,1,0" Padding="5,2">
-            <Grid ColumnDefinitions="Auto, Auto, *, Auto">
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" Margin="0,0,10,0">
+        <Border DockPanel.Dock="Bottom" Background="#F0F0F0" BorderBrush="#C0C0C0" BorderThickness="0,0,1,0" Padding="5,0">
+            <Grid ColumnDefinitions="Auto, Auto, Auto, *">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center" Margin="0,2">
                     <Button Classes="round" Content="+" Command="{Binding AddRowToActiveCommand}" ToolTip.Tip="Add Row"/>
                     <Button Classes="round" Content="-" Command="{Binding RemoveRowFromActiveCommand}" ToolTip.Tip="Remove Last Row"/>
                 </StackPanel>
 
-                <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <Border Grid.Column="1" Width="1" VerticalAlignment="Stretch" Background="#D0D0D0" Margin="8,4"/>
+
+                <Button Grid.Column="2" Content="+" 
+                        Command="{Binding AddNewSheetCommand}"
+                        ToolTip.Tip="New Sheet"
+                        VerticalAlignment="Stretch"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"
+                        Padding="12,0"
+                        Background="Transparent" 
+                        BorderThickness="0" 
+                        FontSize="18"
+                        FontWeight="Normal" 
+                        Foreground="#666666"
+                        Margin="0,0,5,0"/>
+
+                <ScrollViewer Grid.Column="3" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ListBox ItemsSource="{Binding Sheets}" SelectedItem="{Binding ActiveSheet}" Background="Transparent">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -118,17 +153,16 @@
                         </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                <DockPanel LastChildFill="True">
+                                    <Button DockPanel.Dock="Right" Classes="close" Content="✕"
+                                            Command="{Binding DataContext.CloseSheetCommand, ElementName=RootWindow}"
+                                            CommandParameter="{Binding}"/>
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                </DockPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
                 </ScrollViewer>
-
-                <Button Grid.Column="3" Content="+" Width="24" Height="24" 
-                        Command="{Binding AddNewSheetCommand}"
-                        Background="Transparent" BorderThickness="0" 
-                        FontWeight="Bold" Foreground="#666666"
-                        VerticalAlignment="Center" HorizontalContentAlignment="Center"/>
             </Grid>
         </Border>
 

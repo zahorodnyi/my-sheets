@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MySheets.Core.Services;
@@ -25,6 +26,23 @@ public partial class MainWindowViewModel : ObservableObject {
         var newSheet = new SheetViewModel($"Sheet{_untitledCount++}");
         Sheets.Add(newSheet);
         ActiveSheet = newSheet;
+    }
+
+    [RelayCommand]
+    public void CloseSheet(SheetViewModel sheet) {
+        if (sheet == null) return;
+
+        int index = Sheets.IndexOf(sheet);
+        if (index == -1) return;
+
+        bool wasActive = ActiveSheet == sheet;
+
+        Sheets.Remove(sheet);
+
+        if (wasActive && Sheets.Count > 0) {
+            int newIndex = Math.Min(index, Sheets.Count - 1);
+            ActiveSheet = Sheets[newIndex];
+        }
     }
 
     [RelayCommand]
