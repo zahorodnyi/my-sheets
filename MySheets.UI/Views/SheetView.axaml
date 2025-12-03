@@ -84,20 +84,7 @@
                                                             HorizontalAlignment="Left"
                                                             Margin="9,0,0,0"
                                                             FontSize="12"/>
-                                                
-                                                <TextBox x:Name="CellEditor"
-                                                            Text="{Binding Expression}" 
-                                                            IsHitTestVisible="False" 
-                                                            LostFocus="OnCellEditorLostFocus"
-                                                            Background="White" 
-                                                            BorderThickness="0" 
-                                                            CornerRadius="0" 
-                                                            Padding="6,3" 
-                                                            FontSize="12"
-                                                            Opacity="0"
-                                                            HorizontalAlignment="Stretch" 
-                                                            VerticalAlignment="Stretch"/>
-                                            </Panel>
+                                                </Panel>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -106,9 +93,11 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <Canvas IsHitTestVisible="False">
+                <Canvas x:Name="OverlayCanvas">
+                    
                     <Border BorderBrush="#1A73E8" BorderThickness="1" Background="#201A73E8" 
                             IsVisible="{Binding IsSelectionVisible}" 
+                            IsHitTestVisible="False"
                             Canvas.Left="{Binding SelectionX}" 
                             Canvas.Top="{Binding SelectionY}" 
                             Width="{Binding SelectionWidth}" 
@@ -120,6 +109,7 @@
                                 RadiusX="2"
                                 RadiusY="2"
                                 IsVisible="{Binding IsRefSelectionVisible}"
+                                IsHitTestVisible="False"
                                 StrokeDashArray="4,2"
                                 Canvas.Left="{Binding RefSelectionX}"
                                 Canvas.Top="{Binding RefSelectionY}"
@@ -130,7 +120,20 @@
                             BorderBrush="#1A73E8" 
                             BorderThickness="2" 
                             Background="Transparent"
+                            IsHitTestVisible="False"
                             IsVisible="False"/>
+
+                    <TextBox x:Name="FloatingEditor"
+                             IsVisible="False"
+                             Background="White"
+                             BorderThickness="0"
+                             MinHeight="0"
+                             Padding="9,0,0,0"
+                             CornerRadius="0"
+                             FontSize="12"
+                             VerticalContentAlignment="Center"
+                             HorizontalAlignment="Left"
+                             VerticalAlignment="Top"/>
                 </Canvas>
             </Panel>
         </ScrollViewer>
