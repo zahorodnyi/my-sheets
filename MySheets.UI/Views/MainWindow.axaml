@@ -75,7 +75,21 @@
                 </Button>
 
                 <TextBlock Text="MySheets" Foreground="#666666" FontWeight="SemiBold" VerticalAlignment="Center" Margin="5,0"/>
-                <Border Width="1" Height="20" Background="#C0C0C0"/>
+                
+                <TextBox Text="{Binding ActiveSheet.CurrentAddress}"
+                         Width="50"
+                         Height="26"
+                         HorizontalContentAlignment="Center"
+                         VerticalContentAlignment="Center"
+                         BorderThickness="0"
+                         IsReadOnly="True"
+                         Focusable="False"
+                         Background="Transparent"
+                         FontWeight="Bold"
+                         Foreground="#666666"
+                         Margin="5,0,0,0"/>
+
+                <Border Width="1" Height="20" Background="#C0C0C0" Margin="5,0"/>
                 <TextBlock Text="fx" FontFamily="Times New Roman" FontStyle="Italic" FontWeight="Bold" VerticalAlignment="Center" Foreground="#666666"/>
                 
                 <TextBox x:Name="FormulaBar"

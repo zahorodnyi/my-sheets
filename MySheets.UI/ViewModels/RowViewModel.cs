@@ -11,6 +11,9 @@ public partial class RowViewModel : ObservableObject {
 
     [ObservableProperty]
     private double _height;
+    
+    [ObservableProperty] 
+    private bool _isActive;
 
     public RowViewModel(IEnumerable<CellViewModel> cells, int rowNumber, double height = 25) {
         Cells = new ObservableCollection<CellViewModel>(cells);

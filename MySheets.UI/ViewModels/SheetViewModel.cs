@@ -27,6 +27,10 @@ public partial class SheetViewModel : ObservableObject {
     [ObservableProperty] private bool _isRefSelectionVisible;
 
     [ObservableProperty] private CellViewModel? _selectedCell;
+    [ObservableProperty] private string _currentAddress = "A1";
+
+    private RowViewModel? _activeRowHeader;
+    private ColumnViewModel? _activeColHeader;
 
     public ObservableCollection<ColumnViewModel> ColumnHeaders { get; }
     public ObservableCollection<RowViewModel> Rows { get; }
@@ -69,6 +73,21 @@ public partial class SheetViewModel : ObservableObject {
         
         if (row >= 0 && row < Rows.Count && col >= 0 && col < Rows[row].Cells.Count) {
             SelectedCell = Rows[row].Cells[col];
+        }
+
+        string colName = MainWindowViewModel.GetColumnName(col);
+        CurrentAddress = $"{colName}{row + 1}";
+
+        if (_activeRowHeader != null) _activeRowHeader.IsActive = false;
+        if (_activeColHeader != null) _activeColHeader.IsActive = false;
+
+        if (row >= 0 && row < Rows.Count) {
+            _activeRowHeader = Rows[row];
+            _activeRowHeader.IsActive = true;
+        }
+        if (col >= 0 && col < ColumnHeaders.Count) {
+            _activeColHeader = ColumnHeaders[col];
+            _activeColHeader.IsActive = true;
         }
 
         IsSelectionVisible = true;

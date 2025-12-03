@@ -8,6 +8,9 @@ public partial class ColumnViewModel : ObservableObject {
 
     [ObservableProperty]
     private double _width;
+    
+    [ObservableProperty] 
+    private bool _isActive;
 
     public ColumnViewModel(string header, double width = 120) {
         _header = header;
