@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using MySheets.Core.Services;
 using MySheets.Core.Utilities;
 
@@ -58,9 +59,23 @@ public class Worksheet {
         if (cell.Expression.StartsWith("=")) {
             bool hasCycle = false;
             List<(int, int)> cyclePath = new();
+            var referencesToAdd = new HashSet<(int, int)>();
 
             foreach (var reference in CellReferenceUtility.ExtractReferences(cell.Expression)) {
-                if (!DependencyGraph.TryAddDependency(row, col, reference.Row, reference.Col, out var path)) {
+                referencesToAdd.Add(reference);
+            }
+
+            var rangeRegex = new Regex(@"([A-Za-z]+[0-9]+):([A-Za-z]+[0-9]+)");
+            foreach (Match match in rangeRegex.Matches(cell.Expression)) {
+                try {
+                    foreach (var refPoint in CellReferenceUtility.ParseRange(match.Value)) {
+                        referencesToAdd.Add(refPoint);
+                    }
+                } catch {  }
+            }
+
+            foreach (var reference in referencesToAdd) {
+                if (!DependencyGraph.TryAddDependency(row, col, reference.Item1, reference.Item2, out var path)) {
                     hasCycle = true;
                     cyclePath = path;
                     break;

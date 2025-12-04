@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using MySheets.Core.Utilities;
 
 namespace MySheets.Core.Services;
 
@@ -30,21 +31,40 @@ public class FormulaEvaluator {
             char c = expression[i];
 
             if (char.IsWhiteSpace(c)) {
-                if (buffer.Length > 0) {
-                    AddToken(tokens, buffer);
-                }
+                if (buffer.Length > 0) AddToken(tokens, buffer);
                 continue;
+            }
+
+            if (c == ':') {
+                if (buffer.Length > 0) {
+                    string startRef = buffer.ToString();
+                    buffer.Clear();
+                    
+                    var endRefBuilder = new StringBuilder();
+                    int j = i + 1;
+                    while (j < expression.Length && char.IsLetterOrDigit(expression[j])) {
+                        endRefBuilder.Append(expression[j]);
+                        j++;
+                    }
+                    
+                    if (endRefBuilder.Length > 0) {
+                        string endRef = endRefBuilder.ToString();
+                        ExpandRange(tokens, startRef, endRef);
+                        i = j - 1; 
+                        continue;
+                    } else {
+                        tokens.Add(startRef.ToUpper());
+                        tokens.Add(":");
+                        continue;
+                    }
+                }
             }
 
             if (c == '+') {
                 if (buffer.Length == 0) {
-                    if (tokens.Count == 0) {
-                        continue; 
-                    }
+                    if (tokens.Count == 0) continue; 
                     var lastToken = tokens[tokens.Count - 1];
-                    if (lastToken == "(" || lastToken == "," || IsOperator(lastToken)) {
-                        continue; 
-                    }
+                    if (lastToken == "(" || lastToken == "," || IsOperator(lastToken)) continue; 
                 }
             }
 
@@ -80,6 +100,11 @@ public class FormulaEvaluator {
                 while (i + 1 < expression.Length && (char.IsLetterOrDigit(expression[i + 1]))) {
                     buffer.Append(expression[++i]);
                 }
+                
+                if (i + 1 < expression.Length && expression[i+1] == ':') {
+                    continue; 
+                }
+
                 AddToken(tokens, buffer);
             } else {
                 if (buffer.Length > 0) {
@@ -94,6 +119,27 @@ public class FormulaEvaluator {
         }
 
         return tokens;
+    }
+
+    private void ExpandRange(List<string> tokens, string start, string end) {
+        try {
+            var range = $"{start}:{end}";
+            var cells = CellReferenceUtility.ParseRange(range).ToList();
+            
+            for (int k = 0; k < cells.Count; k++) {
+                var (r, c) = cells[k];
+                string colName = CellReferenceUtility.GetColumnName(c);
+                tokens.Add($"{colName}{r + 1}");
+                
+                if (k < cells.Count - 1) {
+                    tokens.Add(","); 
+                }
+            }
+        } catch {
+            tokens.Add(start.ToUpper());
+            tokens.Add(":");
+            tokens.Add(end.ToUpper());
+        }
     }
 
     private void AddToken(List<string> tokens, StringBuilder buffer) {

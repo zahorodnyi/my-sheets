@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MySheets.Core.Models;
+using MySheets.Core.Utilities;
 
 namespace MySheets.UI.ViewModels;
 
@@ -11,6 +12,8 @@ public partial class SheetViewModel : ObservableObject {
     public Worksheet Worksheet { get; }
     private int _anchorRow;
     private int _anchorCol;
+    private int _currentRow;
+    private int _currentCol;
 
     [ObservableProperty] private string _name;
     
@@ -74,10 +77,7 @@ public partial class SheetViewModel : ObservableObject {
         if (row >= 0 && row < Rows.Count && col >= 0 && col < Rows[row].Cells.Count) {
             SelectedCell = Rows[row].Cells[col];
         }
-
-        string colName = MainWindowViewModel.GetColumnName(col);
-        CurrentAddress = $"{colName}{row + 1}";
-
+        
         if (_activeRowHeader != null) _activeRowHeader.IsActive = false;
         if (_activeColHeader != null) _activeColHeader.IsActive = false;
 
@@ -91,11 +91,35 @@ public partial class SheetViewModel : ObservableObject {
         }
 
         IsSelectionVisible = true;
-        UpdateSelectionGeometry(row, col);
+        UpdateSelection(row, col);
     }
 
     public void UpdateSelection(int row, int col) {
+        if (row < 0 || col < 0) return;
+        
+        _currentRow = row;
+        _currentCol = col;
+
         UpdateSelectionGeometry(row, col);
+        UpdateAddressText();
+    }
+
+    private void UpdateAddressText() {
+        string startCol = CellReferenceUtility.GetColumnName(_anchorCol);
+        string startAddr = $"{startCol}{_anchorRow + 1}";
+
+        if (_anchorRow == _currentRow && _anchorCol == _currentCol) {
+            CurrentAddress = startAddr;
+        } else {
+            int r1 = Math.Min(_anchorRow, _currentRow);
+            int r2 = Math.Max(_anchorRow, _currentRow);
+            int c1 = Math.Min(_anchorCol, _currentCol);
+            int c2 = Math.Max(_anchorCol, _currentCol);
+
+            string tlCol = CellReferenceUtility.GetColumnName(c1);
+            string brCol = CellReferenceUtility.GetColumnName(c2);
+            CurrentAddress = $"{tlCol}{r1 + 1}:{brCol}{r2 + 1}";
+        }
     }
 
     private void UpdateSelectionGeometry(int currentRow, int currentCol) {
@@ -120,20 +144,27 @@ public partial class SheetViewModel : ObservableObject {
         SelectionHeight = h;
     }
 
-    public void ShowRefSelection(int row, int col) {
-        double x = 0;
-        double y = 0;
-        double w = ColumnHeaders[col].Width;
-        double h = Rows[row].Height;
+    public void ShowRefSelection(int row, int col, int endRow = -1, int endCol = -1) {
+         if (endRow == -1) endRow = row;
+         if (endCol == -1) endCol = col;
+         
+         int r1 = Math.Min(row, endRow);
+         int r2 = Math.Max(row, endRow);
+         int c1 = Math.Min(col, endCol);
+         int c2 = Math.Max(col, endCol);
 
-        for (int c = 0; c < col; c++) x += ColumnHeaders[c].Width;
-        for (int r = 0; r < row; r++) y += Rows[r].Height;
+         double x = 0, y = 0, w = 0, h = 0;
+         
+         for (int c = 0; c < c1; c++) x += ColumnHeaders[c].Width;
+         for (int r = 0; r < r1; r++) y += Rows[r].Height;
+         for (int c = c1; c <= c2; c++) w += ColumnHeaders[c].Width;
+         for (int r = r1; r <= r2; r++) h += Rows[r].Height;
 
-        RefSelectionX = x;
-        RefSelectionY = y;
-        RefSelectionWidth = w;
-        RefSelectionHeight = h;
-        IsRefSelectionVisible = true;
+         RefSelectionX = x;
+         RefSelectionY = y;
+         RefSelectionWidth = w;
+         RefSelectionHeight = h;
+         IsRefSelectionVisible = true;
     }
 
     public void HideRefSelection() {

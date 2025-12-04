@@ -7,6 +7,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.VisualTree;
+using MySheets.Core.Utilities;
 using MySheets.UI.ViewModels;
 
 namespace MySheets.UI.Views;
@@ -24,6 +25,9 @@ public partial class SheetView : UserControl {
     
     private int _anchorRowIndex = -1;
     private int _anchorColIndex = -1;
+
+    private int _refAnchorRow = -1;
+    private int _refAnchorCol = -1;
 
     private CellViewModel? _editingCellViewModel;
     private string _originalExpression = string.Empty;
@@ -218,35 +222,13 @@ public partial class SheetView : UserControl {
                 bool isSelfClick = (r == _anchorRowIndex && c == _anchorColIndex);
 
                 if (!isSelfClick && activeEditor != null && activeEditor.Text?.StartsWith("=") == true) {
-                    var (tokenType, start, length) = GetTokenContext(activeEditor);
-                    string colName = MainWindowViewModel.GetColumnName(c);
-                    string newRef = $"{colName}{r + 1}";
-
-                    if (tokenType == TokenType.Number) {
-                        if (!TryCommitEditor()) {
-                            e.Handled = true;
-                            return;
-                        }
-                    } else {
-                        if (tokenType == TokenType.Reference) {
-                            string currentText = activeEditor.Text ?? "";
-                            currentText = currentText.Remove(start, length);
-                            currentText = currentText.Insert(start, newRef);
-                            activeEditor.Text = currentText;
-                            activeEditor.CaretIndex = start + newRef.Length;
-                        } else {
-                            int caret = activeEditor.CaretIndex;
-                            string currentText = activeEditor.Text ?? "";
-                            currentText = currentText.Insert(caret, newRef);
-                            activeEditor.Text = currentText;
-                            activeEditor.CaretIndex = caret + newRef.Length;
-                        }
-
-                        vm.ShowRefSelection(r, c);
-                        activeEditor.Focus();
-                        e.Handled = true;
-                        return;
-                    }
+                    _refAnchorRow = r;
+                    _refAnchorCol = c;
+                    HandleFormulaRefSelection(activeEditor, r, c, vm, isDrag: false);
+                    _isSelecting = true;
+                    e.Pointer.Capture(panel);
+                    e.Handled = true;
+                    return;
                 }
                 
                 if (!isSelfClick) {
@@ -281,6 +263,45 @@ public partial class SheetView : UserControl {
         }
     }
 
+    private void HandleFormulaRefSelection(TextBox editor, int r, int c, SheetViewModel vm, bool isDrag) {
+        string newRef;
+        string startRefPart;
+
+        if (isDrag && (_refAnchorRow != r || _refAnchorCol != c)) {
+             string startCol = CellReferenceUtility.GetColumnName(_refAnchorCol);
+             string endCol = CellReferenceUtility.GetColumnName(c);
+             newRef = $"{startCol}{_refAnchorRow + 1}:{endCol}{r + 1}";
+             startRefPart = ""; 
+        } else {
+             _refAnchorRow = r;
+             _refAnchorCol = c;
+             newRef = $"{CellReferenceUtility.GetColumnName(c)}{r + 1}";
+             startRefPart = newRef;
+        }
+
+        var (tokenType, start, length) = GetTokenContext(editor);
+        string currentText = editor.Text ?? "";
+        
+        if (tokenType == TokenType.Reference) {
+             currentText = currentText.Remove(start, length);
+             currentText = currentText.Insert(start, newRef);
+             editor.Text = currentText;
+             editor.CaretIndex = start + newRef.Length;
+        } else {
+             currentText = currentText.Insert(editor.CaretIndex, newRef);
+             editor.Text = currentText;
+             editor.CaretIndex = editor.CaretIndex + newRef.Length;
+        }
+
+        if (newRef.Contains(":")) {
+             vm.ShowRefSelection(_refAnchorRow, _refAnchorCol, r, c);
+        } else {
+             vm.ShowRefSelection(r, c);
+        }
+        
+        editor.Focus();
+    }
+
     private enum TokenType { None, Operator, Reference, Number }
 
     private (TokenType type, int start, int length) GetTokenContext(TextBox editor) {
@@ -294,12 +315,12 @@ public partial class SheetView : UserControl {
             
             if (char.IsLetterOrDigit(prevChar)) {
                 int start = caret - 1;
-                while (start > 0 && char.IsLetterOrDigit(text[start - 1])) {
+                while (start > 0 && (char.IsLetterOrDigit(text[start - 1]) || text[start - 1] == ':')) {
                     start--;
                 }
 
                 int end = caret;
-                while (end < text.Length && char.IsLetterOrDigit(text[end])) {
+                while (end < text.Length && (char.IsLetterOrDigit(text[end]) || text[end] == ':')) {
                     end++;
                 }
 
@@ -309,7 +330,7 @@ public partial class SheetView : UserControl {
                     return (TokenType.Number, start, token.Length);
                 }
                 
-                if (Regex.IsMatch(token, @"^[A-Za-z]+[0-9]+$")) {
+                if (Regex.IsMatch(token, @"^[A-Za-z]+[0-9]+(:[A-Za-z]+[0-9]+)?$") || Regex.IsMatch(token, @"^[A-Za-z]+[0-9]+$")) {
                     return (TokenType.Reference, start, token.Length);
                 }
 
@@ -460,7 +481,14 @@ public partial class SheetView : UserControl {
 
             var (r, c) = GetRowColumnAt(absX, absY, vm);
             if (r != -1 && c != -1) {
-                vm.UpdateSelection(r, c);
+                var activeEditor = GetActiveEditor();
+                bool isFormulaMode = activeEditor != null && activeEditor.Text?.StartsWith("=") == true;
+                
+                if (isFormulaMode) {
+                    HandleFormulaRefSelection(activeEditor!, r, c, vm, isDrag: true);
+                } else {
+                    vm.UpdateSelection(r, c);
+                }
             }
         }
     }
