@@ -156,10 +156,11 @@
                             </Button>
                         </StackPanel>
                         
-                        <Button Classes="tool" ToolTip.Tip="Bold">
+                        <Button Classes="tool" ToolTip.Tip="Bold" Command="{Binding ToggleBoldCommand}">
                             <TextBlock Text="B" FontWeight="Bold" FontSize="15" Foreground="#444444"/>
                         </Button>
-                        <Button Classes="tool" ToolTip.Tip="Italic">
+                        
+                        <Button Classes="tool" ToolTip.Tip="Italic" Command="{Binding ToggleItalicCommand}">
                             <PathIcon Data="M6,19V16H9L12.63,7H10V4H17V7H14.37L10.75,16H13V19H6Z"
                                       Width="14" Height="14" Foreground="#444444"/>
                         </Button>

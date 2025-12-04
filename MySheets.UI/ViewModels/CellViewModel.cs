@@ -3,6 +3,7 @@ namespace MySheets.UI.ViewModels;
 using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MySheets.Core.Models;
+using Avalonia.Media;
 
 public class CellViewModel : ObservableObject {
     private readonly Cell _model;
@@ -58,9 +59,37 @@ public class CellViewModel : ObservableObject {
         }
     }
     
+    public bool IsBold {
+        get => _model.IsBold;
+        set {
+            if (_model.IsBold != value) {
+                _model.IsBold = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(FontWeight)); 
+            }
+        }
+    }
+
+    public FontWeight FontWeight => IsBold ? FontWeight.Bold : FontWeight.Normal;
+
+    public bool IsItalic {
+        get => _model.IsItalic;
+        set {
+            if (_model.IsItalic != value) {
+                _model.IsItalic = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(FontStyle)); 
+            }
+        }
+    }
+
+    public FontStyle FontStyle => IsItalic ? FontStyle.Italic : FontStyle.Normal;
+    
     public void Refresh() {
         OnPropertyChanged(nameof(Value));
         OnPropertyChanged(nameof(Expression));
-        OnPropertyChanged(nameof(FontSize)); 
+        OnPropertyChanged(nameof(FontSize));
+        OnPropertyChanged(nameof(FontWeight));
+        OnPropertyChanged(nameof(FontStyle));
     }
 }

@@ -25,6 +25,9 @@ public class Cell {
     public object? Value { get; set; }
     
     public double FontSize { get; set; } = 12.0;
+    
+    public bool IsBold { get; set; }
+    public bool IsItalic { get; set; }
 
     public CellType Type { get; private set; }
 

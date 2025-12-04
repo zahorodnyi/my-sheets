@@ -72,6 +72,20 @@ public partial class MainWindowViewModel : ObservableObject {
             }
         }
     }
+    
+    [RelayCommand]
+    private void ToggleBold() {
+        if (ActiveSheet?.SelectedCell is { } cell) {
+            cell.IsBold = !cell.IsBold;
+        }
+    }
+
+    [RelayCommand]
+    private void ToggleItalic() {
+        if (ActiveSheet?.SelectedCell is { } cell) {
+            cell.IsItalic = !cell.IsItalic;
+        }
+    }
 
     public void SaveData(string path) {
         if (ActiveSheet == null) return;
