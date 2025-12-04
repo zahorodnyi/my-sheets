@@ -36,8 +36,16 @@ public class CellViewModel : ObservableObject {
             }
         }
     }
-
-    public object Value => _model.Value;
+    
+    public object Value {
+        get {
+            var val = _model.Value;
+            if (val is string str && str.StartsWith("'")) {
+                return str.Substring(1);
+            }
+            return val;
+        }
+    }
     
     public void Refresh() {
         OnPropertyChanged(nameof(Value));
