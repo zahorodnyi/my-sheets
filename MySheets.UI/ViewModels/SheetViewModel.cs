@@ -104,6 +104,23 @@ public partial class SheetViewModel : ObservableObject {
         UpdateAddressText();
     }
 
+    public void ApplyStyleToSelection(Action<CellViewModel> applyAction) {
+        int r1 = Math.Min(_anchorRow, _currentRow);
+        int r2 = Math.Max(_anchorRow, _currentRow);
+        int c1 = Math.Min(_anchorCol, _currentCol);
+        int c2 = Math.Max(_anchorCol, _currentCol);
+
+        for (int r = r1; r <= r2; r++) {
+            if (r >= Rows.Count) continue;
+            var row = Rows[r];
+            
+            for (int c = c1; c <= c2; c++) {
+                if (c >= row.Cells.Count) continue;
+                applyAction(row.Cells[c]);
+            }
+        }
+    }
+
     private void UpdateAddressText() {
         string startCol = CellReferenceUtility.GetColumnName(_anchorCol);
         string startAddr = $"{startCol}{_anchorRow + 1}";

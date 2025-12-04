@@ -57,34 +57,56 @@ public partial class MainWindowViewModel : ObservableObject {
     
     [RelayCommand]
     private void IncreaseFontSize() {
-        if (ActiveSheet?.SelectedCell is { } cell) {
-            if (cell.FontSize < 72) {
-                cell.FontSize += 1;
-            }
-        }
+        ActiveSheet?.ApplyStyleToSelection(cell => {
+             if (cell.FontSize < 72) cell.FontSize += 1;
+        });
     }
     
     [RelayCommand]
     private void DecreaseFontSize() {
-        if (ActiveSheet?.SelectedCell is { } cell) {
-            if (cell.FontSize > 6) {
-                cell.FontSize -= 1;
-            }
-        }
+        ActiveSheet?.ApplyStyleToSelection(cell => {
+             if (cell.FontSize > 6) cell.FontSize -= 1;
+        });
     }
     
     [RelayCommand]
     private void ToggleBold() {
-        if (ActiveSheet?.SelectedCell is { } cell) {
+        ActiveSheet?.ApplyStyleToSelection(cell => {
             cell.IsBold = !cell.IsBold;
-        }
+        });
     }
 
     [RelayCommand]
     private void ToggleItalic() {
-        if (ActiveSheet?.SelectedCell is { } cell) {
+        ActiveSheet?.ApplyStyleToSelection(cell => {
             cell.IsItalic = !cell.IsItalic;
-        }
+        });
+    }
+
+    [RelayCommand]
+    private void SetTextColor() {
+        ActiveSheet?.ApplyStyleToSelection(cell => {
+            string current = cell.Foreground?.ToString() ?? "";
+            bool isRed = current.Contains("FF0000") || current.Contains("red", StringComparison.OrdinalIgnoreCase);
+            cell.SetTextColor(isRed ? "#000000" : "#FF0000");
+        });
+    }
+
+    [RelayCommand]
+    private void SetFillColor() {
+        ActiveSheet?.ApplyStyleToSelection(cell => {
+            string current = cell.Background?.ToString() ?? "";
+            bool isYellow = current.Contains("FFFF00") || current.Contains("yellow", StringComparison.OrdinalIgnoreCase);
+            cell.SetBackgroundColor(isYellow ? "Transparent" : "#FFFF00");
+        });
+    }
+
+    [RelayCommand]
+    private void ToggleBorders() {
+        ActiveSheet?.ApplyStyleToSelection(cell => {
+            bool hasFullBorder = cell.BorderThickness.Left > 0;
+            cell.SetBorder(hasFullBorder ? "0,0,1,1" : "1,1,1,1");
+        });
     }
 
     public void SaveData(string path) {

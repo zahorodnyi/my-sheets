@@ -21,13 +21,13 @@ public class Cell {
             DetermineType();
         }
     }
-
     public object? Value { get; set; }
-    
-    public double FontSize { get; set; } = 12.0;
-    
+    public double FontSize { get; set; } = 12.0; 
     public bool IsBold { get; set; }
     public bool IsItalic { get; set; }
+    public string TextColor { get; set; } = "#000000"; 
+    public string BackgroundColor { get; set; } = "Transparent";
+    public string BorderThickness { get; set; } = "0,0,1,1";
 
     public CellType Type { get; private set; }
 

@@ -4,6 +4,7 @@ using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MySheets.Core.Models;
 using Avalonia.Media;
+using Avalonia;
 
 public class CellViewModel : ObservableObject {
     private readonly Cell _model;
@@ -13,7 +14,6 @@ public class CellViewModel : ObservableObject {
         _model = model;
         _sheet = sheet;
         Column = column;
-        
         _sheet.CellStateChanged += OnCellStateChanged;
     }
 
@@ -85,11 +85,41 @@ public class CellViewModel : ObservableObject {
 
     public FontStyle FontStyle => IsItalic ? FontStyle.Italic : FontStyle.Normal;
     
+    public IBrush Foreground => Brush.Parse(_model.TextColor);
+    
+    public IBrush Background => Brush.Parse(_model.BackgroundColor);
+    
+    public Thickness BorderThickness => Thickness.Parse(_model.BorderThickness);
+    
+    public void SetTextColor(string colorHex) {
+        if (_model.TextColor != colorHex) {
+            _model.TextColor = colorHex;
+            OnPropertyChanged(nameof(Foreground));
+        }
+    }
+
+    public void SetBackgroundColor(string colorHex) {
+        if (_model.BackgroundColor != colorHex) {
+            _model.BackgroundColor = colorHex;
+            OnPropertyChanged(nameof(Background));
+        }
+    }
+
+    public void SetBorder(string thickness) {
+        if (_model.BorderThickness != thickness) {
+            _model.BorderThickness = thickness;
+            OnPropertyChanged(nameof(BorderThickness));
+        }
+    }
+    
     public void Refresh() {
         OnPropertyChanged(nameof(Value));
         OnPropertyChanged(nameof(Expression));
         OnPropertyChanged(nameof(FontSize));
         OnPropertyChanged(nameof(FontWeight));
         OnPropertyChanged(nameof(FontStyle));
+        OnPropertyChanged(nameof(Foreground));
+        OnPropertyChanged(nameof(Background));
+        OnPropertyChanged(nameof(BorderThickness));
     }
 }

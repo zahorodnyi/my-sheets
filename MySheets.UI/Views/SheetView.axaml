@@ -88,9 +88,13 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="vm:CellViewModel">
-                                        <Border BorderBrush="#D9D9D9" BorderThickness="0,0,1,1" Width="{Binding Column.Width}" Background="White">
+                                        <Border BorderBrush="#D9D9D9" 
+                                                BorderThickness="{Binding BorderThickness}" 
+                                                Width="{Binding Column.Width}" 
+                                                Background="{Binding Background}">
                                             <Panel>
                                                 <TextBlock Text="{Binding Value}" 
+                                                           Foreground="{Binding Foreground}"
                                                            FontSize="{Binding FontSize}"
                                                            FontWeight="{Binding FontWeight}"
                                                            FontStyle="{Binding FontStyle}"
