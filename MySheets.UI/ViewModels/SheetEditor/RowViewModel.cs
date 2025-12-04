@@ -1,8 +1,8 @@
-namespace MySheets.UI.ViewModels;
-
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace MySheets.UI.ViewModels.SheetEditor;
 
 public partial class RowViewModel : ObservableObject {
     public ObservableCollection<CellViewModel> Cells { get; }

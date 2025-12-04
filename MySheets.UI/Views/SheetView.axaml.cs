@@ -5,10 +5,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Media;
 using Avalonia.VisualTree;
-using MySheets.Core.Utilities;
-using MySheets.UI.ViewModels;
+using MySheets.Core.Common;
+using MySheets.UI.ViewModels.SheetEditor;
+using ColumnViewModel = MySheets.UI.ViewModels.SheetEditor.ColumnViewModel;
+using RowViewModel = MySheets.UI.ViewModels.SheetEditor.RowViewModel;
+using SheetViewModel = MySheets.UI.ViewModels.SheetEditor.SheetViewModel;
 
 namespace MySheets.UI.Views;
 

@@ -1,6 +1,6 @@
-namespace MySheets.UI.ViewModels;
-
 using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace MySheets.UI.ViewModels.SheetEditor;
 
 public partial class ColumnViewModel : ObservableObject {
     [ObservableProperty]

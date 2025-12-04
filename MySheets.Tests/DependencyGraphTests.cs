@@ -1,7 +1,4 @@
-using System.Collections.Generic;
-using System.Linq;
-using MySheets.Core.Models;
-using Xunit;
+using MySheets.Core.Calculation;
 
 namespace MySheets.Tests {
     public class DependencyGraphTests {

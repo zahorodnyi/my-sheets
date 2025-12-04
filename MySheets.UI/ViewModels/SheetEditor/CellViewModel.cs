@@ -1,10 +1,10 @@
-namespace MySheets.UI.ViewModels;
-
 using System;
-using CommunityToolkit.Mvvm.ComponentModel;
-using MySheets.Core.Models;
-using Avalonia.Media;
 using Avalonia;
+using Avalonia.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
+using MySheets.Core.Domain;
+
+namespace MySheets.UI.ViewModels.SheetEditor;
 
 public class CellViewModel : ObservableObject {
     private readonly Cell _model;

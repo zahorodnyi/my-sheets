@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Text;
-using MySheets.Core.Utilities;
+using MySheets.Core.Common;
 
-namespace MySheets.Core.Services;
+namespace MySheets.Core.Calculation;
 
 public class FormulaEvaluator {
     private static readonly HashSet<string> Functions = new() { "SUM", "AVERAGE", "MAX", "MIN", "MEDIAN" };

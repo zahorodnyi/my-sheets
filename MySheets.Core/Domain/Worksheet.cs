@@ -1,9 +1,9 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using MySheets.Core.Services;
-using MySheets.Core.Utilities;
+using MySheets.Core.Calculation;
+using MySheets.Core.Common;
 
-namespace MySheets.Core.Models;
+namespace MySheets.Core.Domain;
 
 public class Worksheet {
     private readonly Dictionary<(int Row, int Col), Cell> _cells = new();

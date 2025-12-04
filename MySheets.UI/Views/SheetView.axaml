@@ -2,10 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:MySheets.UI.ViewModels"
+             xmlns:vm="using:MySheets.UI.ViewModels.SheetEditor"
+             xmlns:sheetEditor="clr-namespace:MySheets.UI.ViewModels.SheetEditor"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="MySheets.UI.Views.SheetView"
-             x:DataType="vm:SheetViewModel"
+             x:DataType="sheetEditor:SheetViewModel"
              Focusable="True"
              PointerReleased="OnPointerReleased"
              PointerMoved="OnPointerMoved">
@@ -62,7 +63,7 @@
                     <ItemsPanelTemplate><StackPanel Orientation="Vertical"/></ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:RowViewModel">
+                    <DataTemplate x:DataType="sheetEditor:RowViewModel">
                         <Panel Height="{Binding Height}">
                             <Border Classes="header" Classes.active="{Binding IsActive}" BorderBrush="#C0C0C0" BorderThickness="0,0,1,1">
                                 <TextBlock Text="{Binding Header}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#333333" FontSize="12"/>
@@ -81,13 +82,13 @@
                         <ItemsPanelTemplate><StackPanel Orientation="Vertical"/></ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:RowViewModel">
+                        <DataTemplate x:DataType="sheetEditor:RowViewModel">
                             <ItemsControl ItemsSource="{Binding Cells}" Height="{Binding Height}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="vm:CellViewModel">
+                                    <DataTemplate x:DataType="sheetEditor:CellViewModel">
                                         <Border BorderBrush="#D9D9D9" 
                                                 BorderThickness="{Binding BorderThickness}" 
                                                 Width="{Binding Column.Width}" 

@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MySheets.Core.Services;
+using MySheets.Core.IO;
 
 namespace MySheets.UI.ViewModels;
 
@@ -11,10 +10,10 @@ public partial class MainWindowViewModel : ObservableObject {
     private readonly FileService _fileService;
     private int _untitledCount = 1;
 
-    public ObservableCollection<SheetViewModel> Sheets { get; } = new();
+    public ObservableCollection<SheetEditor.SheetViewModel> Sheets { get; } = new();
 
     [ObservableProperty] 
-    private SheetViewModel? _activeSheet;
+    private SheetEditor.SheetViewModel? _activeSheet;
 
     public MainWindowViewModel() {
         _fileService = new FileService();
@@ -23,13 +22,13 @@ public partial class MainWindowViewModel : ObservableObject {
 
     [RelayCommand]
     public void AddNewSheet() {
-        var newSheet = new SheetViewModel($"Sheet{_untitledCount++}");
+        var newSheet = new SheetEditor.SheetViewModel($"Sheet{_untitledCount++}");
         Sheets.Add(newSheet);
         ActiveSheet = newSheet;
     }
 
     [RelayCommand]
-    public void CloseSheet(SheetViewModel sheet) {
+    public void CloseSheet(SheetEditor.SheetViewModel sheet) {
         if (sheet == null) return;
 
         int index = Sheets.IndexOf(sheet);
@@ -119,7 +118,7 @@ public partial class MainWindowViewModel : ObservableObject {
         var data = _fileService.Load(path);
         
         var fileName = System.IO.Path.GetFileNameWithoutExtension(path);
-        var newSheet = new SheetViewModel(fileName);
+        var newSheet = new SheetEditor.SheetViewModel(fileName);
         
         foreach (var cellDto in data) {
             newSheet.Worksheet.SetCell(cellDto.Row, cellDto.Col, cellDto.Expression);

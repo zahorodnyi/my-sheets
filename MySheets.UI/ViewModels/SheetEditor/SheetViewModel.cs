@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MySheets.Core.Models;
-using MySheets.Core.Utilities;
+using MySheets.Core.Common;
+using MySheets.Core.Domain;
 
-namespace MySheets.UI.ViewModels;
+namespace MySheets.UI.ViewModels.SheetEditor;
 
 public partial class SheetViewModel : ObservableObject {
     public Worksheet Worksheet { get; }

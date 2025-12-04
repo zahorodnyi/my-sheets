@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace MySheets.Core.Models;
+namespace MySheets.Core.Domain;
 
 public enum CellType {
     Text,

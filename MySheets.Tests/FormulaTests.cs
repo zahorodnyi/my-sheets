@@ -1,5 +1,4 @@
-using MySheets.Core.Models;
-using Xunit;
+using MySheets.Core.Domain;
 
 namespace MySheets.Tests;
 

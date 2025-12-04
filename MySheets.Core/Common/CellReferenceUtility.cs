@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace MySheets.Core.Utilities;
+namespace MySheets.Core.Common;
 
 public static class CellReferenceUtility {
     private static readonly Regex ReferenceRegex = new(@"([A-Za-z]+)([0-9]+)");

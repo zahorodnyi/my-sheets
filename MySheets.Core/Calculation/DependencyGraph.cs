@@ -1,7 +1,4 @@
-using System.Collections.Generic;
-using System.Linq;
-
-namespace MySheets.Core.Models;
+namespace MySheets.Core.Calculation;
 
 public class DependencyGraph {
     private readonly Dictionary<(int, int), HashSet<(int, int)>> _dependents = new();
