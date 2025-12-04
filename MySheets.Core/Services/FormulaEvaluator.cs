@@ -4,6 +4,8 @@ using System.Text;
 namespace MySheets.Core.Services;
 
 public class FormulaEvaluator {
+    private static readonly HashSet<string> Functions = new() { "SUM", "AVERAGE", "MAX", "MIN", "MEDIAN" };
+
     public object Evaluate(string expression, Func<string, object> getVariableValue) {
         if (string.IsNullOrEmpty(expression)) return string.Empty;
         
@@ -27,47 +29,120 @@ public class FormulaEvaluator {
         for (int i = 0; i < expression.Length; i++) {
             char c = expression[i];
 
-            if (char.IsWhiteSpace(c)) continue;
+            if (char.IsWhiteSpace(c)) {
+                if (buffer.Length > 0) {
+                    AddToken(tokens, buffer);
+                }
+                continue;
+            }
+
+            if (c == '+') {
+                if (buffer.Length == 0) {
+                    if (tokens.Count == 0) {
+                        continue; 
+                    }
+                    var lastToken = tokens[tokens.Count - 1];
+                    if (lastToken == "(" || lastToken == "," || IsOperator(lastToken)) {
+                        continue; 
+                    }
+                }
+            }
+
+            if (c == '-') {
+                bool isNegativeNumber = false;
+                if (i + 1 < expression.Length && char.IsDigit(expression[i + 1])) {
+                    if (buffer.Length == 0) {
+                        if (tokens.Count == 0) {
+                            isNegativeNumber = true;
+                        } else {
+                            var lastToken = tokens[tokens.Count - 1];
+                            if (lastToken == "(" || lastToken == "," || IsOperator(lastToken)) {
+                                isNegativeNumber = true;
+                            }
+                        }
+                    }
+                }
+
+                if (isNegativeNumber) {
+                    buffer.Append(c);
+                    continue; 
+                }
+            }
 
             if (char.IsDigit(c) || c == '.') {
                 buffer.Append(c);
             } else if (char.IsLetter(c)) {
+                if (buffer.Length > 0 && IsNumeric(buffer.ToString())) {
+                    AddToken(tokens, buffer);
+                }
+                
                 buffer.Append(c);
                 while (i + 1 < expression.Length && (char.IsLetterOrDigit(expression[i + 1]))) {
                     buffer.Append(expression[++i]);
                 }
-                tokens.Add(buffer.ToString());
-                buffer.Clear();
+                AddToken(tokens, buffer);
             } else {
                 if (buffer.Length > 0) {
-                    tokens.Add(buffer.ToString());
-                    buffer.Clear();
+                    AddToken(tokens, buffer);
                 }
                 tokens.Add(c.ToString());
             }
         }
 
         if (buffer.Length > 0) {
-            tokens.Add(buffer.ToString());
+            AddToken(tokens, buffer);
         }
 
         return tokens;
     }
 
+    private void AddToken(List<string> tokens, StringBuilder buffer) {
+        tokens.Add(buffer.ToString().ToUpper());
+        buffer.Clear();
+    }
+
+    private bool IsNumeric(string s) => double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out _);
+
     private Queue<string> ShuntingYard(List<string> tokens) {
         var output = new Queue<string>();
         var operators = new Stack<string>();
+        var argCounts = new Stack<int>();
 
-        foreach (var token in tokens) {
-            if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out _) || IsIdentifier(token)) {
+        for (int i = 0; i < tokens.Count; i++) {
+            var token = tokens[i];
+
+            if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out _)) {
                 output.Enqueue(token);
+            } else if (Functions.Contains(token)) {
+                operators.Push(token);
+                argCounts.Push(1);
+            } else if (token == ",") {
+                while (operators.Count > 0 && operators.Peek() != "(") {
+                    output.Enqueue(operators.Pop());
+                }
+                if (argCounts.Count > 0) {
+                    argCounts.Push(argCounts.Pop() + 1);
+                }
             } else if (token == "(") {
                 operators.Push(token);
             } else if (token == ")") {
                 while (operators.Count > 0 && operators.Peek() != "(") {
                     output.Enqueue(operators.Pop());
                 }
-                if (operators.Count > 0) operators.Pop();
+                
+                if (operators.Count == 0) throw new InvalidOperationException("Mismatched parentheses");
+                operators.Pop();
+
+                if (operators.Count > 0 && Functions.Contains(operators.Peek())) {
+                    var func = operators.Pop();
+                    var args = argCounts.Pop();
+                    
+                    if (tokens[i - 1] == "(") args = 0;
+                    
+                    output.Enqueue($"{func}:{args}");
+                }
+            } else if (IsIdentifier(token)) {
+                output.Enqueue(token);
             } else if (IsOperator(token)) {
                 while (operators.Count > 0 && Precedence(operators.Peek()) >= Precedence(token)) {
                     output.Enqueue(operators.Pop());
@@ -77,6 +152,7 @@ public class FormulaEvaluator {
         }
 
         while (operators.Count > 0) {
+            if (operators.Peek() == "(") throw new InvalidOperationException("Mismatched parentheses");
             output.Enqueue(operators.Pop());
         }
 
@@ -91,6 +167,36 @@ public class FormulaEvaluator {
 
             if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out double value)) {
                 stack.Push(value);
+            } else if (token.Contains(':')) {
+                var parts = token.Split(':');
+                var funcName = parts[0];
+                var argCount = int.Parse(parts[1]);
+                var args = new List<double>();
+
+                for (int i = 0; i < argCount; i++) {
+                    if (stack.Count == 0) throw new InvalidOperationException();
+                    var obj = stack.Pop();
+                    if (IsCycleError(obj)) { stack.Push("#CYCLE!"); goto NextToken; }
+                    args.Add(Convert.ToDouble(obj, CultureInfo.InvariantCulture));
+                }
+                
+                if (args.Count == 0 && funcName != "COUNT") throw new InvalidOperationException();
+
+                switch (funcName) {
+                    case "SUM": stack.Push(args.Sum()); break;
+                    case "AVERAGE": stack.Push(args.Average()); break;
+                    case "MAX": stack.Push(args.Max()); break;
+                    case "MIN": stack.Push(args.Min()); break;
+                    case "MEDIAN": 
+                        args.Sort();
+                        int count = args.Count;
+                        if (count % 2 == 0)
+                            stack.Push((args[count / 2 - 1] + args[count / 2]) / 2.0);
+                        else
+                            stack.Push(args[count / 2]);
+                        break;
+                }
+                NextToken:;
             } else if (IsIdentifier(token)) {
                 var val = getVariableValue(token);
                 stack.Push(val);
@@ -129,7 +235,7 @@ public class FormulaEvaluator {
     }
 
     private bool IsIdentifier(string token) {
-        return char.IsLetter(token[0]);
+        return char.IsLetter(token[0]) && !Functions.Contains(token);
     }
 
     private bool IsOperator(string token) {
