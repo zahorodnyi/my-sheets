@@ -1,5 +1,6 @@
 namespace MySheets.UI.ViewModels;
 
+using System;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MySheets.Core.Models;
 
@@ -37,6 +38,16 @@ public class CellViewModel : ObservableObject {
         }
     }
     
+    public double FontSize {
+        get => _model.FontSize;
+        set {
+            if (Math.Abs(_model.FontSize - value) > 0.01) {
+                _model.FontSize = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+    
     public object Value {
         get {
             var val = _model.Value;
@@ -50,6 +61,6 @@ public class CellViewModel : ObservableObject {
     public void Refresh() {
         OnPropertyChanged(nameof(Value));
         OnPropertyChanged(nameof(Expression));
+        OnPropertyChanged(nameof(FontSize)); 
     }
-    
 }

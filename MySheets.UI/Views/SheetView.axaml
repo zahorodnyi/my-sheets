@@ -91,11 +91,11 @@
                                         <Border BorderBrush="#D9D9D9" BorderThickness="0,0,1,1" Width="{Binding Column.Width}" Background="White">
                                             <Panel>
                                                 <TextBlock Text="{Binding Value}" 
-                                                            VerticalAlignment="Center" 
-                                                            HorizontalAlignment="Left"
-                                                            Margin="9,0,0,0"
-                                                            FontSize="12"/>
-                                                </Panel>
+                                                           FontSize="{Binding FontSize}"
+                                                           VerticalAlignment="Center" 
+                                                           HorizontalAlignment="Left"
+                                                           Margin="9,0,0,0"/>
+                                            </Panel>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

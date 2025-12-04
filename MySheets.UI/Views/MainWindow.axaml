@@ -138,15 +138,20 @@
 
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" Spacing="0">
-                            <Button Classes="tool" Width="24" Height="24" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center">
+                            <Button Classes="tool" 
+                                    Command="{Binding DecreaseFontSizeCommand}"
+                                    Width="24" Height="24" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center">
                                 <TextBlock Text="-" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Button>
                             
                             <Border BorderThickness="1" BorderBrush="#C0C0C0" CornerRadius="2" Background="White" Height="24" Width="40" Margin="2,0">
-                                <TextBlock Text="10" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="12"/>
+                                <TextBlock Text="{Binding ActiveSheet.SelectedCell.FontSize, FallbackValue=12}" 
+                                           VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="12"/>
                             </Border>
                             
-                            <Button Classes="tool" Width="24" Height="24" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center">
+                            <Button Classes="tool" 
+                                    Command="{Binding IncreaseFontSizeCommand}"
+                                    Width="24" Height="24" Padding="0" VerticalContentAlignment="Center" HorizontalContentAlignment="Center">
                                 <TextBlock Text="+" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                             </Button>
                         </StackPanel>

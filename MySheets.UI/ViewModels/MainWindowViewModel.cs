@@ -54,6 +54,24 @@ public partial class MainWindowViewModel : ObservableObject {
     private void RemoveRowFromActive() {
         ActiveSheet?.RemoveRow();
     }
+    
+    [RelayCommand]
+    private void IncreaseFontSize() {
+        if (ActiveSheet?.SelectedCell is { } cell) {
+            if (cell.FontSize < 72) {
+                cell.FontSize += 1;
+            }
+        }
+    }
+    
+    [RelayCommand]
+    private void DecreaseFontSize() {
+        if (ActiveSheet?.SelectedCell is { } cell) {
+            if (cell.FontSize > 6) {
+                cell.FontSize -= 1;
+            }
+        }
+    }
 
     public void SaveData(string path) {
         if (ActiveSheet == null) return;
