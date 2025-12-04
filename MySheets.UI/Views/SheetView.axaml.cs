@@ -15,6 +15,7 @@ public partial class SheetView : UserControl {
     private bool _isResizingColumn;
     private bool _isResizingRow;
     private bool _isSelecting;
+    private bool _isSyncingText;
     
     private Point _lastMousePosition;
     private ColumnViewModel? _targetColumn;
@@ -41,6 +42,7 @@ public partial class SheetView : UserControl {
         
         FloatingEditor.KeyDown += OnEditorKeyDown;
         FloatingEditor.LostFocus += OnEditorLostFocus;
+        FloatingEditor.TextChanged += OnFloatingEditorTextChanged;
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
@@ -49,6 +51,7 @@ public partial class SheetView : UserControl {
             MainWindow.GlobalFormulaBar.KeyDown += OnEditorKeyDown;
             MainWindow.GlobalFormulaBar.TextInput += OnEditorTextInput;
             MainWindow.GlobalFormulaBar.GotFocus += OnGlobalBarGotFocus;
+            MainWindow.GlobalFormulaBar.TextChanged += OnGlobalBarTextChanged;
         }
     }
 
@@ -58,6 +61,29 @@ public partial class SheetView : UserControl {
             MainWindow.GlobalFormulaBar.KeyDown -= OnEditorKeyDown;
             MainWindow.GlobalFormulaBar.TextInput -= OnEditorTextInput;
             MainWindow.GlobalFormulaBar.GotFocus -= OnGlobalBarGotFocus;
+            MainWindow.GlobalFormulaBar.TextChanged -= OnGlobalBarTextChanged;
+        }
+    }
+    
+    private void OnFloatingEditorTextChanged(object? sender, TextChangedEventArgs e) {
+        if (_isSyncingText || MainWindow.GlobalFormulaBar == null) return;
+
+        try {
+            _isSyncingText = true;
+            MainWindow.GlobalFormulaBar.Text = FloatingEditor.Text;
+        } finally {
+            _isSyncingText = false;
+        }
+    }
+
+    private void OnGlobalBarTextChanged(object? sender, TextChangedEventArgs e) {
+        if (_isSyncingText || !FloatingEditor.IsVisible) return;
+
+        try {
+            _isSyncingText = true;
+            FloatingEditor.Text = MainWindow.GlobalFormulaBar.Text;
+        } finally {
+            _isSyncingText = false;
         }
     }
 
@@ -335,8 +361,9 @@ public partial class SheetView : UserControl {
 
         string newExpression = FloatingEditor.IsVisible ? FloatingEditor.Text ?? "" : MainWindow.GlobalFormulaBar?.Text ?? "";
 
-        if (newExpression.StartsWith("=")) {
-            if (DataContext is SheetViewModel vm) {
+        if (DataContext is SheetViewModel vm) {
+            vm.HideRefSelection(); 
+            if (newExpression.StartsWith("=")) {
                 if (!vm.ValidateFormula(newExpression)) {
                     ShowValidationError();
                     return false;
@@ -358,7 +385,11 @@ public partial class SheetView : UserControl {
             HideValidationError();
             return;
         }
-
+        
+        if (DataContext is SheetViewModel vm) {
+            vm.HideRefSelection();
+        }
+        
         if (_editingCellViewModel != null) {
             if (MainWindow.GlobalFormulaBar != null) {
                 MainWindow.GlobalFormulaBar.Text = _originalExpression;
