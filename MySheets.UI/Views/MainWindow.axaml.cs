@@ -24,7 +24,9 @@ public partial class MainWindow : Window {
             Title = "Open Spreadsheet",
             AllowMultiple = false,
             FileTypeFilter = new[] {
-                new FilePickerFileType("JSON Files") { Patterns = new[] { "*.json" } }
+                new FilePickerFileType("Supported Files") { Patterns = new[] { "*.json", "*.xlsx" } },
+                new FilePickerFileType("JSON Files") { Patterns = new[] { "*.json" } },
+                new FilePickerFileType("Excel Workbook") { Patterns = new[] { "*.xlsx" } }
             }
         });
 
@@ -40,8 +42,10 @@ public partial class MainWindow : Window {
         var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
             Title = "Save Spreadsheet",
             DefaultExtension = "json",
+            SuggestedFileName = "Sheet1",
             FileTypeChoices = new[] {
-                new FilePickerFileType("JSON Files") { Patterns = new[] { "*.json" } }
+                new FilePickerFileType("JSON Files") { Patterns = new[] { "*.json" } },
+                new FilePickerFileType("Excel Workbook") { Patterns = new[] { "*.xlsx" } }
             }
         });
 
