@@ -18,7 +18,8 @@ public class FormulaEvaluator {
             var tokens = Tokenize(expression);
             var rpn = ShuntingYard(tokens);
             return EvaluateRPN(rpn, getVariableValue);
-        } catch {
+        } 
+        catch {
             return "#ERROR!";
         }
     }
@@ -52,7 +53,8 @@ public class FormulaEvaluator {
                         ExpandRange(tokens, startRef, endRef);
                         i = j - 1; 
                         continue;
-                    } else {
+                    } 
+                    else {
                         tokens.Add(startRef.ToUpper());
                         tokens.Add(":");
                         continue;
@@ -74,7 +76,8 @@ public class FormulaEvaluator {
                     if (buffer.Length == 0) {
                         if (tokens.Count == 0) {
                             isNegativeNumber = true;
-                        } else {
+                        } 
+                        else {
                             var lastToken = tokens[tokens.Count - 1];
                             if (lastToken == "(" || lastToken == "," || IsOperator(lastToken)) {
                                 isNegativeNumber = true;
@@ -91,7 +94,8 @@ public class FormulaEvaluator {
 
             if (char.IsDigit(c) || c == '.') {
                 buffer.Append(c);
-            } else if (char.IsLetter(c)) {
+            } 
+            else if (char.IsLetter(c)) {
                 if (buffer.Length > 0 && IsNumeric(buffer.ToString())) {
                     AddToken(tokens, buffer);
                 }
@@ -106,7 +110,8 @@ public class FormulaEvaluator {
                 }
 
                 AddToken(tokens, buffer);
-            } else {
+            } 
+            else {
                 if (buffer.Length > 0) {
                     AddToken(tokens, buffer);
                 }
@@ -135,7 +140,8 @@ public class FormulaEvaluator {
                     tokens.Add(","); 
                 }
             }
-        } catch {
+        } 
+        catch {
             tokens.Add(start.ToUpper());
             tokens.Add(":");
             tokens.Add(end.ToUpper());
@@ -159,19 +165,23 @@ public class FormulaEvaluator {
 
             if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out _)) {
                 output.Enqueue(token);
-            } else if (Functions.Contains(token)) {
+            } 
+            else if (Functions.Contains(token)) {
                 operators.Push(token);
                 argCounts.Push(1);
-            } else if (token == ",") {
+            } 
+            else if (token == ",") {
                 while (operators.Count > 0 && operators.Peek() != "(") {
                     output.Enqueue(operators.Pop());
                 }
                 if (argCounts.Count > 0) {
                     argCounts.Push(argCounts.Pop() + 1);
                 }
-            } else if (token == "(") {
+            } 
+            else if (token == "(") {
                 operators.Push(token);
-            } else if (token == ")") {
+            } 
+            else if (token == ")") {
                 while (operators.Count > 0 && operators.Peek() != "(") {
                     output.Enqueue(operators.Pop());
                 }
@@ -187,9 +197,11 @@ public class FormulaEvaluator {
                     
                     output.Enqueue($"{func}:{args}");
                 }
-            } else if (IsIdentifier(token)) {
+            } 
+            else if (IsIdentifier(token)) {
                 output.Enqueue(token);
-            } else if (IsOperator(token)) {
+            } 
+            else if (IsOperator(token)) {
                 while (operators.Count > 0 && Precedence(operators.Peek()) >= Precedence(token)) {
                     output.Enqueue(operators.Pop());
                 }
@@ -213,7 +225,8 @@ public class FormulaEvaluator {
 
             if (double.TryParse(token, NumberStyles.Any, CultureInfo.InvariantCulture, out double value)) {
                 stack.Push(value);
-            } else if (token.Contains(':')) {
+            } 
+            else if (token.Contains(':')) {
                 var parts = token.Split(':');
                 var funcName = parts[0];
                 var argCount = int.Parse(parts[1]);
@@ -236,17 +249,22 @@ public class FormulaEvaluator {
                     case "MEDIAN": 
                         args.Sort();
                         int count = args.Count;
-                        if (count % 2 == 0)
+                        if (count % 2 == 0) {
                             stack.Push((args[count / 2 - 1] + args[count / 2]) / 2.0);
-                        else
+                        }
+                        else {
                             stack.Push(args[count / 2]);
+                        }
+
                         break;
                 }
                 NextToken:;
-            } else if (IsIdentifier(token)) {
+            } 
+            else if (IsIdentifier(token)) {
                 var val = getVariableValue(token);
                 stack.Push(val);
-            } else {
+            } 
+            else {
                 if (stack.Count < 2) throw new InvalidOperationException("Invalid expression");
                 
                 var rightObj = stack.Pop();

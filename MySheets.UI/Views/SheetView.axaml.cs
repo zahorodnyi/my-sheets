@@ -77,7 +77,8 @@ public partial class SheetView : UserControl {
         try {
             _isSyncingText = true;
             MainWindow.GlobalFormulaBar.Text = FloatingEditor.Text;
-        } finally {
+        } 
+        finally {
             _isSyncingText = false;
         }
     }
@@ -88,7 +89,8 @@ public partial class SheetView : UserControl {
         try {
             _isSyncingText = true;
             FloatingEditor.Text = MainWindow.GlobalFormulaBar.Text;
-        } finally {
+        } 
+        finally {
             _isSyncingText = false;
         }
     }
@@ -125,7 +127,8 @@ public partial class SheetView : UserControl {
                      _anchorRowIndex = nextRow;
                      UpdateActiveCellVisual(vm);
                  }
-             } else {
+             } 
+             else {
                  e.Handled = true; 
              }
              return;
@@ -274,7 +277,8 @@ public partial class SheetView : UserControl {
              string endCol = CellReferenceUtility.GetColumnName(c);
              newRef = $"{startCol}{_refAnchorRow + 1}:{endCol}{r + 1}";
              startRefPart = ""; 
-        } else {
+        } 
+        else {
              _refAnchorRow = r;
              _refAnchorCol = c;
              newRef = $"{CellReferenceUtility.GetColumnName(c)}{r + 1}";
@@ -289,7 +293,8 @@ public partial class SheetView : UserControl {
              currentText = currentText.Insert(start, newRef);
              editor.Text = currentText;
              editor.CaretIndex = start + newRef.Length;
-        } else {
+        } 
+        else {
              currentText = currentText.Insert(editor.CaretIndex, newRef);
              editor.Text = currentText;
              editor.CaretIndex = editor.CaretIndex + newRef.Length;
@@ -297,7 +302,8 @@ public partial class SheetView : UserControl {
 
         if (newRef.Contains(":")) {
              vm.ShowRefSelection(_refAnchorRow, _refAnchorCol, r, c);
-        } else {
+        } 
+        else {
              vm.ShowRefSelection(r, c);
         }
         
@@ -451,7 +457,8 @@ public partial class SheetView : UserControl {
         
         if (FloatingEditor.IsVisible) {
             FloatingEditor.Focus();
-        } else if (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused) {
+        } 
+        else if (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused) {
             MainWindow.GlobalFormulaBar.Focus();
         }
     }
@@ -488,7 +495,8 @@ public partial class SheetView : UserControl {
                 
                 if (isFormulaMode) {
                     HandleFormulaRefSelection(activeEditor!, r, c, vm, isDrag: true);
-                } else {
+                } 
+                else {
                     vm.UpdateSelection(r, c);
                 }
             }

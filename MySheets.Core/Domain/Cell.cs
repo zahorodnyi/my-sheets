@@ -32,9 +32,10 @@ public class Cell {
     public CellType Type { get; private set; }
 
     public Cell(int row, int column) {
-        if (row < 0 || column < 0)
+        if (row < 0 || column < 0) {
             throw new ArgumentOutOfRangeException(nameof(row), "Coordinates cannot be negative.");
 
+        }
         Row = row;
         Col = column;
         DetermineType();
@@ -48,10 +49,12 @@ public class Cell {
 
         if (Expression.StartsWith('=')) {
             Type = CellType.Formula;
-        } else if (double.TryParse(Expression, NumberStyles.Any, CultureInfo.InvariantCulture, out double numberResult)) {
+        } 
+        else if (double.TryParse(Expression, NumberStyles.Any, CultureInfo.InvariantCulture, out double numberResult)) {
             Type = CellType.Number;
             Value = numberResult; 
-        } else {
+        } 
+        else {
             Type = CellType.Text;
             Value = Expression;
         }

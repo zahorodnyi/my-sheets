@@ -10,7 +10,8 @@ public class FileService {
     public void Save(string path, IEnumerable<Cell> cells) {
         if (path.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase)) {
             SaveAsXlsx(path, cells);
-        } else {
+        } 
+        else {
             var data = cells.Select(c => new CellDto(c.Row, c.Col, c.Expression));
             var options = new JsonSerializerOptions { WriteIndented = true };
             var json = JsonSerializer.Serialize(data, options);
@@ -28,10 +29,12 @@ public class FileService {
             if (cell.Type == CellType.Formula) {
                 string formula = cell.Expression.StartsWith("=") ? cell.Expression.Substring(1) : cell.Expression;
                 xlCell.FormulaA1 = formula;
-            } else {
+            } 
+            else {
                 if (cell.Value is double num) {
                     xlCell.Value = num;
-                } else {
+                } 
+                else {
                     xlCell.Value = cell.Expression;
                 }
             }
@@ -51,7 +54,8 @@ public class FileService {
                      xlCell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
                      xlCell.Style.Border.OutsideBorderColor = XLColor.Black;
                 }
-            } catch { }
+            } 
+            catch { }
         }
         
         worksheet.Columns().AdjustToContents();
@@ -89,8 +93,8 @@ public class FileService {
 
                 result.Add(new CellDto(row, col, expression));
             }
-        } catch {
-        }
+        } 
+        catch { }
         return result;
     }
 }

@@ -38,7 +38,8 @@ public class Worksheet {
             if (result is string s && s == "#ERROR!") return false;
             
             return true;
-        } catch {
+        } 
+        catch {
             return false;
         }
     }
@@ -71,7 +72,8 @@ public class Worksheet {
                     foreach (var refPoint in CellReferenceUtility.ParseRange(match.Value)) {
                         referencesToAdd.Add(refPoint);
                     }
-                } catch {  }
+                } 
+                catch {  }
             }
 
             foreach (var reference in referencesToAdd) {
@@ -89,13 +91,16 @@ public class Worksheet {
                     cycleCell.Value = "#CYCLE!";
                     CellStateChanged?.Invoke(cRow, cCol);
                 }
-            } else {
+            } 
+            else {
                 cell.Value = _evaluator.Evaluate(cell.Expression, GetCellValue);
             }
-        } else {
+        } 
+        else {
             if (double.TryParse(cell.Expression, NumberStyles.Any, CultureInfo.InvariantCulture, out double numberResult)) {
                 cell.Value = numberResult;
-            } else {
+            } 
+            else {
                 cell.Value = cell.Expression;
             }
         }
@@ -146,7 +151,8 @@ public class Worksheet {
             }
             
             return 0.0; 
-        } catch {
+        } 
+        catch {
             throw new Exception("Invalid reference");
         }
     }

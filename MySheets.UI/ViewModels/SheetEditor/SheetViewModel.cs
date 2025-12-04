@@ -127,7 +127,8 @@ public partial class SheetViewModel : ObservableObject {
 
         if (_anchorRow == _currentRow && _anchorCol == _currentCol) {
             CurrentAddress = startAddr;
-        } else {
+        } 
+        else {
             int r1 = Math.Min(_anchorRow, _currentRow);
             int r2 = Math.Max(_anchorRow, _currentRow);
             int c1 = Math.Min(_anchorCol, _currentCol);
