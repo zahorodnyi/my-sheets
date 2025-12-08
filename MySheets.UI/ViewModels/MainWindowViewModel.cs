@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Avalonia.Layout; 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -15,6 +16,43 @@ public partial class MainWindowViewModel : ObservableObject {
 
     [ObservableProperty] 
     private SheetEditor.SheetViewModel? _activeSheet;
+
+
+    public List<string> TextColors { get; } = new() {
+        "#000000", // Black
+        "#434343", // Dark Grey
+        "#666666", // Grey
+        "#999999", // Light Grey
+        "#FFFFFF", // White
+        "#CC0000", // Dark Red
+        "#E69138", // Dark Orange
+        "#F1C232", // Dark Yellow
+        "#6AA84F", // Dark Green
+        "#3D85C6", // Dark Cyan/Blue
+        "#073763", // Navy
+        "#674EA7"  // Purple
+    };
+
+    public List<string> FillColors { get; } = new() {
+        "#FFFFFF", // White
+        "#F3F3F3", // Light Grey
+        "#B7B7B7", // Grey
+        "#F4CCCC", // Pastel Red
+        "#FCE5CD", // Pastel Orange
+        "#FFF2CC", // Pastel Yellow
+        "#D9EAD3", // Pastel Green
+        "#D0E0E3", // Pastel Cyan
+        "#CFE2F3", // Pastel Blue
+        "#D9D2E9", // Pastel Purple
+        "#EAD1DC"  // Pastel Pink
+    };
+
+    [ObservableProperty]
+    private string _currentTextColor = "#000000";
+
+    [ObservableProperty]
+    private string _currentFillColor = "Transparent";
+
 
     public MainWindowViewModel() {
         _fileService = new FileService();
@@ -83,21 +121,42 @@ public partial class MainWindowViewModel : ObservableObject {
         });
     }
 
+
     [RelayCommand]
-    private void SetTextColor() {
+    private void ApplyTextColor(string? colorHex) {
+        if (colorHex != null) {
+            CurrentTextColor = colorHex;
+        }
+        
         ActiveSheet?.ApplyStyleToSelection(cell => {
-            string current = cell.Foreground?.ToString() ?? "";
-            bool isRed = current.Contains("FF0000") || current.Contains("red", StringComparison.OrdinalIgnoreCase);
-            cell.SetTextColor(isRed ? "#000000" : "#FF0000");
+            cell.SetTextColor(CurrentTextColor);
         });
     }
 
     [RelayCommand]
-    private void SetFillColor() {
+    private void ResetTextColor() {
+        CurrentTextColor = "#000000";
         ActiveSheet?.ApplyStyleToSelection(cell => {
-            string current = cell.Background?.ToString() ?? "";
-            bool isYellow = current.Contains("FFFF00") || current.Contains("yellow", StringComparison.OrdinalIgnoreCase);
-            cell.SetBackgroundColor(isYellow ? "Transparent" : "#FFFF00");
+            cell.SetTextColor("#000000");
+        });
+    }
+
+    [RelayCommand]
+    private void ApplyFillColor(string? colorHex) {
+        if (colorHex != null) {
+            CurrentFillColor = colorHex;
+        }
+
+        ActiveSheet?.ApplyStyleToSelection(cell => {
+            cell.SetBackgroundColor(CurrentFillColor);
+        });
+    }
+
+    [RelayCommand]
+    private void ResetFillColor() {
+        CurrentFillColor = "Transparent";
+        ActiveSheet?.ApplyStyleToSelection(cell => {
+            cell.SetBackgroundColor("Transparent");
         });
     }
 

@@ -19,7 +19,7 @@ public class AlignmentToIconConverter : IValueConverter {
         string pathData = alignment switch {
             HorizontalAlignment.Center => AlignCenterPath,
             HorizontalAlignment.Right => AlignRightPath,
-            _ => AlignLeftPath // Left або Stretch
+            _ => AlignLeftPath 
         };
 
         return StreamGeometry.Parse(pathData);

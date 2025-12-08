@@ -18,6 +18,8 @@
 
     <Window.Resources>
         <converters:AlignmentToIconConverter x:Key="AlignConverter"/>
+        <converters:StringToBrushConverter x:Key="StringToBrushConverter"/>
+        <converters:ColorEqualityConverter x:Key="ColorEqualityConverter"/>
     </Window.Resources>
 
     <Window.Styles>
@@ -91,6 +93,18 @@
         <Style Selector="Button.close:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="#FFCDD2"/>
             <Setter Property="Foreground" Value="#D32F2F"/>
+        </Style>
+
+        <Style Selector="Button.color-picker">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+        </Style>
+        <Style Selector="Button.color-picker:pointerover /template/ ContentPresenter">
+            <Setter Property="BorderBrush" Value="#666666"/>
         </Style>
 
         <Style Selector="ListBoxItem">
@@ -195,21 +209,74 @@
 
                     <StackPanel Orientation="Horizontal" Spacing="5">
                         <Button Classes="tool" 
-                                Width="28" Height="28" Padding="0"
+                                Width="32" Height="28" Padding="0"
                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                ToolTip.Tip="Text Color" Command="{Binding SetTextColorCommand}">
+                                ToolTip.Tip="Text Color">
+                            <Button.Flyout>
+                                <Flyout Placement="Bottom">
+                                    <StackPanel Spacing="5">
+                                        <Button Content="Reset" Command="{Binding ResetTextColorCommand}" 
+                                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                        <ItemsControl ItemsSource="{Binding TextColors}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel MaxWidth="140"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Classes="color-picker" 
+                                                            Background="{Binding Converter={StaticResource StringToBrushConverter}}"
+                                                            Command="{Binding #RootWindow.((vm:MainWindowViewModel)DataContext).ApplyTextColorCommand}"
+                                                            CommandParameter="{Binding}"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
                             <Panel>
-                                <TextBlock Text="A" FontWeight="Normal" Foreground="Black" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,2"/>
-                                <Border Height="3" Width="14" Background="Red" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                                <TextBlock Text="A" FontWeight="Normal" Foreground="Black" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,3"/>
+                                <Border Height="3" Width="14" 
+                                        Background="{Binding CurrentTextColor, Converter={StaticResource StringToBrushConverter}}" 
+                                        VerticalAlignment="Bottom" Margin="0,0,0,3"/>
                             </Panel>
                         </Button>
                         
                         <Button Classes="tool" 
-                                Width="28" Height="28" Padding="0"
+                                Width="32" Height="28" Padding="0"
                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                ToolTip.Tip="Fill Color" Command="{Binding SetFillColorCommand}">
-                            <PathIcon Data="M 59 67 L 41 99 L 39 129 L 48 157 L 66 179 L 25 229 L 22 284 L 37 313 L 158 434 L 199 452 L 252 442 L 397 301 L 432 310 L 454 330 L 469 366 L 475 435 L 482 448 L 492 445 L 507 384 L 505 295 L 480 235 L 430 179 L 381 145 L 325 120 L 225 20 L 125 30 L 86 46 Z M 170 61 L 184 61 L 113 133 L 156 146 L 226 77 L 395 246 L 236 405 L 216 413 L 181 401 L 70 290 L 59 269 L 65 238 L 101 201 L 160 218 L 238 225 L 259 239 L 278 237 L 293 225 L 297 196 L 277 175 L 257 174 L 239 186 L 166 179 L 118 165 L 85 141 L 79 110 L 96 87 Z"
-                                      Width="16" Height="16" Foreground="#444444"/>
+                                ToolTip.Tip="Fill Color">
+                             <Button.Flyout>
+                                <Flyout Placement="Bottom">
+                                    <StackPanel Spacing="5">
+                                        <Button Content="Reset" Command="{Binding ResetFillColorCommand}" 
+                                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
+                                        <ItemsControl ItemsSource="{Binding FillColors}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel MaxWidth="140"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Classes="color-picker" 
+                                                            Background="{Binding Converter={StaticResource StringToBrushConverter}}"
+                                                            Command="{Binding #RootWindow.((vm:MainWindowViewModel)DataContext).ApplyFillColorCommand}"
+                                                            CommandParameter="{Binding}"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                            <Panel>
+                                <PathIcon Data="M 59 67 L 41 99 L 39 129 L 48 157 L 66 179 L 25 229 L 22 284 L 37 313 L 158 434 L 199 452 L 252 442 L 397 301 L 432 310 L 454 330 L 469 366 L 475 435 L 482 448 L 492 445 L 507 384 L 505 295 L 480 235 L 430 179 L 381 145 L 325 120 L 225 20 L 125 30 L 86 46 Z M 170 61 L 184 61 L 113 133 L 156 146 L 226 77 L 395 246 L 236 405 L 216 413 L 181 401 L 70 290 L 59 269 L 65 238 L 101 201 L 160 218 L 238 225 L 259 239 L 278 237 L 293 225 L 297 196 L 277 175 L 257 174 L 239 186 L 166 179 L 118 165 L 85 141 L 79 110 L 96 87 Z"
+                                          Width="16" Height="16" Foreground="#444444" Margin="0,0,0,4"/>
+                                <Border Height="3" Width="18" 
+                                        Background="{Binding CurrentFillColor, Converter={StaticResource StringToBrushConverter}}" 
+                                        VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                            </Panel>
                         </Button>
 
                         <Button Classes="tool" 
