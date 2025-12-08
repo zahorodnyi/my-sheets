@@ -261,7 +261,7 @@
                             <MenuFlyout>
                                 <MenuItem Header="SUM" Tag="SUM" Click="OnInsertFunctionClick"/>
                                 <MenuItem Header="AVERAGE" Tag="AVERAGE" Click="OnInsertFunctionClick"/>
-                                <MenuItem Header="COUNT" Tag="COUNT" Click="OnInsertFunctionClick"/>
+                                <MenuItem Header="MEDIAN" Tag="MEDIAN" Click="OnInsertFunctionClick"/>
                                 <MenuItem Header="MAX" Tag="MAX" Click="OnInsertFunctionClick"/>
                                 <MenuItem Header="MIN" Tag="MIN" Click="OnInsertFunctionClick"/>
                             </MenuFlyout>
