@@ -93,7 +93,7 @@
                                                 BorderThickness="{Binding BorderThickness}" 
                                                 Width="{Binding Column.Width}" 
                                                 Background="{Binding Background}">
-                                            <Panel>
+                                            <Panel ClipToBounds="False">
                                                 <TextBlock Text="{Binding Value}" 
                                                            Foreground="{Binding Foreground}"
                                                            FontSize="{Binding FontSize}"
@@ -101,6 +101,7 @@
                                                            FontStyle="{Binding FontStyle}"
                                                            VerticalAlignment="Center" 
                                                            HorizontalAlignment="Left"
+                                                           Padding="0,0,5,0"
                                                            Margin="9,0,0,0"/>
                                             </Panel>
                                         </Border>
