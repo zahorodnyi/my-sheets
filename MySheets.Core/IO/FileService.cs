@@ -39,23 +39,28 @@ public class FileService {
                 }
             }
 
-            try {
-                if (cell.IsBold) xlCell.Style.Font.Bold = true;
-                if (cell.IsItalic) xlCell.Style.Font.Italic = true;
-                if (cell.FontSize > 0) xlCell.Style.Font.FontSize = cell.FontSize;
-                
-                if (!string.IsNullOrEmpty(cell.TextColor)) 
+            if (cell.IsBold) xlCell.Style.Font.Bold = true;
+            if (cell.IsItalic) xlCell.Style.Font.Italic = true;
+            if (cell.FontSize > 0) xlCell.Style.Font.FontSize = cell.FontSize;
+            
+            if (!string.IsNullOrEmpty(cell.TextColor)) {
+                try {
                     xlCell.Style.Font.FontColor = XLColor.FromHtml(cell.TextColor);
-                
-                if (!string.IsNullOrEmpty(cell.BackgroundColor) && cell.BackgroundColor != "Transparent")
+                } 
+                catch {  }
+            }
+            
+            if (!string.IsNullOrEmpty(cell.BackgroundColor) && cell.BackgroundColor != "Transparent") {
+                try {
                     xlCell.Style.Fill.BackgroundColor = XLColor.FromHtml(cell.BackgroundColor);
-                
-                if (cell.BorderThickness.Contains("1")) {
-                     xlCell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
-                     xlCell.Style.Border.OutsideBorderColor = XLColor.Black;
-                }
-            } 
-            catch { }
+                } 
+                catch {  }
+            }
+            
+            if (!string.IsNullOrEmpty(cell.BorderThickness) && cell.BorderThickness.Contains("1")) {
+                 xlCell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+                 xlCell.Style.Border.OutsideBorderColor = XLColor.Black;
+            }
         }
         
         worksheet.Columns().AdjustToContents();
@@ -63,7 +68,7 @@ public class FileService {
     }
 
     public IEnumerable<CellDto> Load(string path) {
-        if (!File.Exists(path)) return new List<CellDto>();
+        if (!File.Exists(path)) throw new FileNotFoundException("File not found", path);
 
         if (path.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase)) {
             return LoadFromXlsx(path);
@@ -75,26 +80,25 @@ public class FileService {
 
     private IEnumerable<CellDto> LoadFromXlsx(string path) {
         var result = new List<CellDto>();
-        try {
-            using var workbook = new XLWorkbook(path);
-            var worksheet = workbook.Worksheet(1);
+        using var workbook = new XLWorkbook(path);
+        var worksheet = workbook.Worksheet(1);
 
-            foreach (var cell in worksheet.CellsUsed()) {
-                int row = cell.Address.RowNumber - 1; 
-                int col = cell.Address.ColumnNumber - 1;
+        foreach (var cell in worksheet.CellsUsed()) {
+            int row = cell.Address.RowNumber - 1; 
+            int col = cell.Address.ColumnNumber - 1;
 
-                string expression;
-                
-                if (cell.HasFormula) {
-                    expression = "=" + cell.FormulaA1;
-                } else {
-                    expression = cell.Value.ToString();
-                }
-
-                result.Add(new CellDto(row, col, expression));
+            string expression;
+            
+            if (cell.HasFormula) {
+                expression = "=" + cell.FormulaA1;
+            } 
+            else {
+                expression = cell.Value.ToString();
             }
-        } 
-        catch { }
+
+            result.Add(new CellDto(row, col, expression));
+        }
+        
         return result;
     }
 }
