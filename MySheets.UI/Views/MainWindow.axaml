@@ -233,6 +233,15 @@
                     <Button Classes="tool" ToolTip.Tip="Functions"
                             Width="28" Height="28" Padding="0"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                         <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuItem Header="SUM" Tag="SUM" Click="OnInsertFunctionClick"/>
+                                <MenuItem Header="AVERAGE" Tag="AVERAGE" Click="OnInsertFunctionClick"/>
+                                <MenuItem Header="COUNT" Tag="COUNT" Click="OnInsertFunctionClick"/>
+                                <MenuItem Header="MAX" Tag="MAX" Click="OnInsertFunctionClick"/>
+                                <MenuItem Header="MIN" Tag="MIN" Click="OnInsertFunctionClick"/>
+                            </MenuFlyout>
+                        </Button.Flyout>
                          <TextBlock Text="∑" FontWeight="Normal" FontSize="18" Foreground="#444444"/>
                     </Button>
 

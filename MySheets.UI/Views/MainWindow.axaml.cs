@@ -2,6 +2,8 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using MySheets.UI.ViewModels;
+using Avalonia.VisualTree; 
+using System.Linq;
 
 namespace MySheets.UI.Views;
 
@@ -51,6 +53,22 @@ public partial class MainWindow : Window {
 
         if (file != null && DataContext is MainWindowViewModel vm) {
             vm.SaveData(file.Path.LocalPath);
+        }
+    }
+
+    private void OnInsertFunctionClick(object? sender, RoutedEventArgs e) {
+        if (sender is Control control && control.Tag is string functionName) {
+            if (DataContext is MainWindowViewModel vm && vm.ActiveSheet?.SelectedCell != null) {
+                string formula = $"={functionName.ToUpper()}()";
+                
+                vm.ActiveSheet.SelectedCell.Expression = formula;
+
+                var sheetView = this.GetVisualDescendants().OfType<SheetView>().FirstOrDefault();
+
+                if (sheetView != null) {
+                    sheetView.StartEditing(caretOffsetFromEnd: 1);
+                }
+            }
         }
     }
 }

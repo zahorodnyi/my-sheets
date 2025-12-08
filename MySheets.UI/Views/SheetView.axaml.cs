@@ -51,6 +51,19 @@ public partial class SheetView : UserControl {
         FloatingEditor.TextChanged += OnFloatingEditorTextChanged;
     }
 
+    public void StartEditing(int caretOffsetFromEnd = 0) {
+        if (DataContext is not SheetViewModel vm) return;
+
+        if (_anchorRowIndex != -1 && _anchorColIndex != -1) {
+            ActivateFloatingEditor(_anchorRowIndex, _anchorColIndex, vm, setFocus: true);
+            
+            if (FloatingEditor.IsVisible && caretOffsetFromEnd > 0) {
+                int len = FloatingEditor.Text?.Length ?? 0;
+                FloatingEditor.CaretIndex = Math.Max(0, len - caretOffsetFromEnd);
+            }
+        }
+    }
+
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
         base.OnAttachedToVisualTree(e);
         if (MainWindow.GlobalFormulaBar != null) {
