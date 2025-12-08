@@ -34,7 +34,7 @@ public partial class SheetView : UserControl {
     private CellViewModel? _editingCellViewModel;
     private string _originalExpression = string.Empty;
 
-    private readonly char[] _operators = new[] { '+', '-', '*', '/', '(', ')', '=', ',', '&' };
+    private readonly char[] _operators = new[] { '+', '-', '*', '/', '(', '=', ',', '&' };
 
     public SheetView() {
         InitializeComponent();
@@ -226,10 +226,18 @@ public partial class SheetView : UserControl {
             if (r != -1 && c != -1) {
                 bool isSelfClick = (r == _anchorRowIndex && c == _anchorColIndex);
 
+                bool allowRefSelection = false;
                 if (!isSelfClick && activeEditor != null && activeEditor.Text?.StartsWith("=") == true) {
+                    var (tokenType, _, _) = GetTokenContext(activeEditor);
+                    if (tokenType == TokenType.Operator || tokenType == TokenType.Reference) {
+                        allowRefSelection = true;
+                    }
+                }
+
+                if (allowRefSelection) {
                     _refAnchorRow = r;
                     _refAnchorCol = c;
-                    HandleFormulaRefSelection(activeEditor, r, c, vm, isDrag: false);
+                    HandleFormulaRefSelection(activeEditor!, r, c, vm, isDrag: false);
                     _isSelecting = true;
                     e.Pointer.Capture(panel);
                     e.Handled = true;
@@ -270,19 +278,15 @@ public partial class SheetView : UserControl {
 
     private void HandleFormulaRefSelection(TextBox editor, int r, int c, SheetViewModel vm, bool isDrag) {
         string newRef;
-        string startRefPart;
-
         if (isDrag && (_refAnchorRow != r || _refAnchorCol != c)) {
              string startCol = CellReferenceUtility.GetColumnName(_refAnchorCol);
              string endCol = CellReferenceUtility.GetColumnName(c);
              newRef = $"{startCol}{_refAnchorRow + 1}:{endCol}{r + 1}";
-             startRefPart = ""; 
         } 
         else {
              _refAnchorRow = r;
              _refAnchorCol = c;
              newRef = $"{CellReferenceUtility.GetColumnName(c)}{r + 1}";
-             startRefPart = newRef;
         }
 
         var (tokenType, start, length) = GetTokenContext(editor);
@@ -318,17 +322,30 @@ public partial class SheetView : UserControl {
         if (caret < 0) caret = 0;
         if (caret > text.Length) caret = text.Length;
 
+        if (caret == 0) return (TokenType.None, 0, 0);
+
         if (caret > 0 && caret <= text.Length) {
-            char prevChar = text[caret - 1];
+            int checkIndex = caret - 1;
+            while (checkIndex >= 0 && char.IsWhiteSpace(text[checkIndex])) {
+                checkIndex--;
+            }
             
-            if (char.IsLetterOrDigit(prevChar)) {
+            if (checkIndex < 0) return (TokenType.None, 0, 0);
+
+            char prevChar = text[checkIndex];
+            
+            if (_operators.Contains(prevChar)) {
+                return (TokenType.Operator, caret, 0);
+            }
+
+            if (char.IsLetterOrDigit(prevChar) || prevChar == '$') {
                 int start = caret - 1;
-                while (start > 0 && (char.IsLetterOrDigit(text[start - 1]) || text[start - 1] == ':')) {
+                while (start > 0 && (char.IsLetterOrDigit(text[start - 1]) || text[start - 1] == ':' || text[start - 1] == '$')) {
                     start--;
                 }
 
                 int end = caret;
-                while (end < text.Length && (char.IsLetterOrDigit(text[end]) || text[end] == ':')) {
+                while (end < text.Length && (char.IsLetterOrDigit(text[end]) || text[end] == ':' || text[end] == '$')) {
                     end++;
                 }
 
@@ -338,19 +355,15 @@ public partial class SheetView : UserControl {
                     return (TokenType.Number, start, token.Length);
                 }
                 
-                if (Regex.IsMatch(token, @"^[A-Za-z]+[0-9]+(:[A-Za-z]+[0-9]+)?$") || Regex.IsMatch(token, @"^[A-Za-z]+[0-9]+$")) {
+                if (Regex.IsMatch(token, @"^(\$?[A-Za-z]+\$?[0-9]+)(:(\$?[A-Za-z]+\$?[0-9]+))?$")) {
                     return (TokenType.Reference, start, token.Length);
                 }
 
                 return (TokenType.None, start, token.Length);
             }
-
-            if (_operators.Contains(prevChar)) {
-                return (TokenType.Operator, caret, 0);
-            }
         }
 
-        return (TokenType.Operator, caret, 0);
+        return (TokenType.None, caret, 0);
     }
     
     private void ActivateFloatingEditor(int r, int c, SheetViewModel vm, bool setFocus) {
@@ -493,7 +506,7 @@ public partial class SheetView : UserControl {
                 var activeEditor = GetActiveEditor();
                 bool isFormulaMode = activeEditor != null && activeEditor.Text?.StartsWith("=") == true;
                 
-                if (isFormulaMode) {
+                if (isFormulaMode && (_refAnchorRow != -1)) {
                     HandleFormulaRefSelection(activeEditor!, r, c, vm, isDrag: true);
                 } 
                 else {
@@ -506,7 +519,7 @@ public partial class SheetView : UserControl {
     private void OnPointerReleased(object? sender, PointerReleasedEventArgs e) {
         if (_isResizingColumn) { _isResizingColumn = false; _targetColumn = null; }
         if (_isResizingRow) { _isResizingRow = false; _targetRow = null; }
-        if (_isSelecting) { _isSelecting = false; }
+        if (_isSelecting) { _isSelecting = false; _refAnchorRow = -1; }
         if (_capturedControl != null) {
             e.Pointer.Capture(null);
             _capturedControl = null;
