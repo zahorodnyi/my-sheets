@@ -100,7 +100,7 @@
                                                            FontWeight="{Binding FontWeight}"
                                                            FontStyle="{Binding FontStyle}"
                                                            VerticalAlignment="Center" 
-                                                           HorizontalAlignment="Left"
+                                                           HorizontalAlignment="{Binding CellAlignment}"
                                                            Padding="0,0,5,0"
                                                            Margin="9,0,0,0"/>
                                             </Panel>

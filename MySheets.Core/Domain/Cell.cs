@@ -28,6 +28,7 @@ public class Cell {
     public string TextColor { get; set; } = "#000000"; 
     public string BackgroundColor { get; set; } = "Transparent";
     public string BorderThickness { get; set; } = "0,0,1,1";
+    public string TextAlignment { get; set; } = "Left";
 
     public CellType Type { get; private set; }
 

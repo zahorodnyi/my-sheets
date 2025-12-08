@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:MySheets.UI.ViewModels"
         xmlns:v="using:MySheets.UI.Views"
+        xmlns:converters="using:MySheets.UI.Converters" 
         xmlns:sheetEditor="clr-namespace:MySheets.UI.ViewModels.SheetEditor"
         mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="600"
         x:Class="MySheets.UI.Views.MainWindow"
@@ -14,6 +15,10 @@
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
+
+    <Window.Resources>
+        <converters:AlignmentToIconConverter x:Key="AlignConverter"/>
+    </Window.Resources>
 
     <Window.Styles>
         <Style Selector="ToolTip">
@@ -218,11 +223,30 @@
 
                     <Border Classes="separator"/>
 
-                    <Button Classes="tool" ToolTip.Tip="Align Left" 
+                    <Button Classes="tool" ToolTip.Tip="Alignment" 
                             Width="28" Height="28" Padding="0"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuItem Header="Align Left" Command="{Binding SetAlignmentCommand}" CommandParameter="Left">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="M3,21h18v-2H3V21z M3,17h12v-2H3V17z M3,13h18v-2H3V13z M3,9h12V7H3V9z M3,3v2h18V3H3z" Width="12" Height="12"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Align Center" Command="{Binding SetAlignmentCommand}" CommandParameter="Center">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="M7,21h10v-2H7V21z M3,17h18v-2H3V17z M7,13h10v-2H7V13z M3,9h18V7H3V9z M7,3v2h10V3H7z" Width="12" Height="12"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="Align Right" Command="{Binding SetAlignmentCommand}" CommandParameter="Right">
+                                    <MenuItem.Icon>
+                                        <PathIcon Data="M3,21h18v-2H3V21z M9,17h12v-2H9V17z M3,13h18v-2H3V13z M9,9h12V7H9V9z M3,3v2h18V3H3z" Width="12" Height="12"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
                         <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <PathIcon Data="M3,21h18v-2H3V21z M3,17h12v-2H3V17z M3,13h18v-2H3V13z M3,9h12V7H3V9z M3,3v2h18V3H3z" 
+                            <PathIcon Data="{Binding ActiveSheet.SelectedCell.CellAlignment, Converter={StaticResource AlignConverter}, FallbackValue='M3,21h18v-2H3V21z M3,17h12v-2H3V17z M3,13h18v-2H3V13z M3,9h12V7H3V9z M3,3v2h18V3H3z'}" 
                                       Width="12" Height="12" Foreground="#444444"/>
                             <PathIcon Data="M0,0 L4,4 L8,0" Width="6" Height="4" VerticalAlignment="Center" Foreground="#444444" Margin="0,0,0,0"/>
                         </StackPanel>

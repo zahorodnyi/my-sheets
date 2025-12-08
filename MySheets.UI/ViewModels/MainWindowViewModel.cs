@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using Avalonia.Layout; 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MySheets.Core.IO;
@@ -106,6 +107,15 @@ public partial class MainWindowViewModel : ObservableObject {
             bool hasFullBorder = cell.BorderThickness.Left > 0;
             cell.SetBorder(hasFullBorder ? "0,0,1,1" : "1,1,1,1");
         });
+    }
+
+    [RelayCommand]
+    private void SetAlignment(string alignmentStr) {
+        if (Enum.TryParse<HorizontalAlignment>(alignmentStr, true, out var align)) {
+            ActiveSheet?.ApplyStyleToSelection(cell => {
+                cell.CellAlignment = align;
+            });
+        }
     }
 
     public void SaveData(string path) {

@@ -1,5 +1,6 @@
 using System;
 using Avalonia;
+using Avalonia.Layout; 
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MySheets.Core.Domain;
@@ -91,6 +92,23 @@ public class CellViewModel : ObservableObject {
     
     public Thickness BorderThickness => Thickness.Parse(_model.BorderThickness);
     
+    public HorizontalAlignment CellAlignment {
+        get {
+            return _model.TextAlignment switch {
+                "Center" => HorizontalAlignment.Center,
+                "Right" => HorizontalAlignment.Right,
+                _ => HorizontalAlignment.Left
+            };
+        }
+        set {
+            string newVal = value.ToString();
+            if (_model.TextAlignment != newVal) {
+                _model.TextAlignment = newVal;
+                OnPropertyChanged();
+            }
+        }
+    }
+    
     public void SetTextColor(string colorHex) {
         if (_model.TextColor != colorHex) {
             _model.TextColor = colorHex;
@@ -121,5 +139,6 @@ public class CellViewModel : ObservableObject {
         OnPropertyChanged(nameof(Foreground));
         OnPropertyChanged(nameof(Background));
         OnPropertyChanged(nameof(BorderThickness));
+        OnPropertyChanged(nameof(CellAlignment)); 
     }
 }
