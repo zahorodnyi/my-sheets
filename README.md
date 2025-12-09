@@ -4,19 +4,28 @@
 [![C#](https://img.shields.io/badge/C%23-12-239120.svg)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-A cross-platform spreadsheet application built with .NET 9.0 and Avalonia UI. Implements a custom formula engine with lexical analysis, abstract syntax tree parsing, and sparse matrix storage for efficient memory usage.
+A lightweight, cross-platform spreadsheet application built with .NET 9.0. Designed for performance using sparse memory structures and a custom-built formula compiler.
 
-## Purpose
+##   Features
 
-This project explores core computer science concepts including sparse data structures, compiler design (tokenization, parsing, AST evaluation), dependency graph resolution, and clean architecture patterns in a practical context.
+- **Modern UI:** Clean and intuitive interface with a dedicated formula bar for easy editing (supports visual area selection and click-to-link cell references etc..).
+- **Smart Formulas:** Supports complex math expressions and cell references (e.g., `=A1+B2`, `=SUM(A1:H7)`).
+- **File Support:** Save and load your spreadsheets in **JSON** and **Excel (.xlsx)** formats.
+- **Instant Updates:** Changing a value automatically recalculates all related cells in real-time.
+- **High Performance:** Optimized to run fast and use minimal memory.
+- **Cross-Platform:** Works natively on Windows, macOS, and Linux.
 
 ## Tech Stack
 
-- **Language:** C# 12
-- **Framework:** .NET 9.0
-- **UI:** Avalonia UI
-- **Architecture:** Clean Architecture, MVVM
+- **Core:** C# 12, .NET 9.0
+- **Architecture:** Clean Architecture (Core logic decoupled from UI)
+- **UI Framework:** Avalonia UI (MVVM)
 - **Testing:** xUnit
-- **Storage:** Dictionary-based sparse matrix
-- **Formula Engine:** Custom Lexer → Parser → Evaluator pipeline
 
+## Getting Started
+
+```bash
+git clone https://github.com/zahorodnyi/my-sheets.git
+cd my-sheets/MySheets.UI
+dotnet run
+```
