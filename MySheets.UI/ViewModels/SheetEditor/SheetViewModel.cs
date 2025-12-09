@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text; 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MySheets.Core.Common;
@@ -8,7 +10,29 @@ using MySheets.Core.Domain;
 
 namespace MySheets.UI.ViewModels.SheetEditor;
 
+public class InternalClipboardData {
+    public string TsvContent { get; set; } = string.Empty;
+    public List<CellClipboardModel> Cells { get; set; } = new();
+    public int RowCount { get; set; }
+    public int ColCount { get; set; }
+}
+
+public class CellClipboardModel {
+    public int RelRow { get; set; }
+    public int RelCol { get; set; }
+    public string Expression { get; set; } = string.Empty;
+    public string BackgroundColor { get; set; } = "Transparent";
+    public string TextColor { get; set; } = "#000000";
+    public bool IsBold { get; set; }
+    public bool IsItalic { get; set; }
+    public double FontSize { get; set; }
+    public string BorderThickness { get; set; } = "0,0,1,1";
+    public string TextAlignment { get; set; } = "Left";
+}
+
 public partial class SheetViewModel : ObservableObject {
+    private static InternalClipboardData? _internalClipboard;
+
     public Worksheet Worksheet { get; }
     public UndoRedoManager History { get; }
 
@@ -347,5 +371,123 @@ public partial class SheetViewModel : ObservableObject {
     
     public bool ValidateFormula(string formula) {
         return Worksheet.IsFormulaValid(formula);
+    }
+
+    public string CopySelection() {
+        int r1 = Math.Min(_anchorRow, _currentRow);
+        int r2 = Math.Max(_anchorRow, _currentRow);
+        int c1 = Math.Min(_anchorCol, _currentCol);
+        int c2 = Math.Max(_anchorCol, _currentCol);
+
+        var sb = new StringBuilder();
+        var clipboardData = new InternalClipboardData {
+            RowCount = r2 - r1 + 1,
+            ColCount = c2 - c1 + 1
+        };
+
+        for (int r = r1; r <= r2; r++) {
+            if (r >= Rows.Count) continue;
+            var row = Rows[r];
+            
+            for (int c = c1; c <= c2; c++) {
+                if (c >= row.Cells.Count) continue;
+                
+                var cellVm = row.Cells[c];
+                
+                string val = cellVm.Expression;
+                val = val.Replace("\t", " ").Replace("\n", " "); 
+                sb.Append(val);
+                if (c < c2) sb.Append("\t");
+
+                clipboardData.Cells.Add(new CellClipboardModel {
+                    RelRow = r - r1,
+                    RelCol = c - c1,
+                    Expression = cellVm.Expression,
+                    BackgroundColor = cellVm.Background.ToString() ?? "Transparent",
+                    TextColor = cellVm.Foreground.ToString() ?? "#000000",
+                    IsBold = cellVm.IsBold,
+                    IsItalic = cellVm.IsItalic,
+                    FontSize = cellVm.FontSize,
+                    BorderThickness = cellVm.BorderThickness.ToString(),
+                    TextAlignment = cellVm.CellAlignment.ToString()
+                });
+            }
+            if (r < r2) sb.Append("\r\n");
+        }
+
+        string tsv = sb.ToString();
+        clipboardData.TsvContent = tsv;
+        
+        _internalClipboard = clipboardData;
+        
+        return tsv;
+    }
+
+    public void PasteData(string systemClipboardText) {
+        if (string.IsNullOrEmpty(systemClipboardText)) return;
+
+        History.StartGroup();
+        try {
+            int startRow = _anchorRow;
+            int startCol = _anchorCol;
+
+            bool useInternal = _internalClipboard != null && _internalClipboard.TsvContent == systemClipboardText;
+
+            if (useInternal && _internalClipboard != null) {
+                foreach (var item in _internalClipboard.Cells) {
+                    int targetRow = startRow + item.RelRow;
+                    int targetCol = startCol + item.RelCol;
+
+                    if (targetRow < Rows.Count && targetCol < ColumnHeaders.Count) {
+                        var cell = Rows[targetRow].Cells[targetCol];
+                        cell.Expression = item.Expression;
+                        cell.SetBackgroundColor(item.BackgroundColor);
+                        cell.SetTextColor(item.TextColor);
+                        cell.IsBold = item.IsBold;
+                        cell.IsItalic = item.IsItalic;
+                        cell.FontSize = item.FontSize;
+                        cell.SetBorder(item.BorderThickness);
+                        if (Enum.TryParse<Avalonia.Layout.HorizontalAlignment>(item.TextAlignment, out var align)) {
+                            cell.CellAlignment = align;
+                        }
+                    }
+                }
+                
+                UpdateSelection(
+                    Math.Min(Rows.Count - 1, startRow + _internalClipboard.RowCount - 1),
+                    Math.Min(ColumnHeaders.Count - 1, startCol + _internalClipboard.ColCount - 1)
+                );
+            }
+            else {
+                var rows = systemClipboardText.Replace("\r\n", "\n").Split('\n');
+                for (int i = 0; i < rows.Length; i++) {
+                    var rowData = rows[i];
+                    if (i == rows.Length - 1 && string.IsNullOrEmpty(rowData)) continue; 
+
+                    var cols = rowData.Split('\t');
+                    int targetRow = startRow + i;
+
+                    if (targetRow >= Rows.Count) break;
+
+                    for (int j = 0; j < cols.Length; j++) {
+                        int targetCol = startCol + j;
+                        if (targetCol >= ColumnHeaders.Count) break;
+
+                        var cell = Rows[targetRow].Cells[targetCol];
+                        cell.Expression = cols[j].Trim();
+                    }
+                }
+                
+                int endRow = Math.Min(Rows.Count - 1, startRow + rows.Length - (string.IsNullOrEmpty(rows[^1]) ? 2 : 1));
+                int maxCols = 0;
+                foreach(var r in rows) maxCols = Math.Max(maxCols, r.Split('\t').Length);
+                int endCol = Math.Min(ColumnHeaders.Count - 1, startCol + maxCols - 1);
+
+                UpdateSelection(endRow, endCol);
+            }
+        }
+        finally {
+            History.EndGroup();
+        }
     }
 }

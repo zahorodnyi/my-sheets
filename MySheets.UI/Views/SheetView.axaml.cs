@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using Avalonia.Input.Platform;
 using MySheets.Core.Common;
 using MySheets.UI.ViewModels.SheetEditor;
 using ColumnViewModel = MySheets.UI.ViewModels.SheetEditor.ColumnViewModel;
@@ -176,6 +177,7 @@ public partial class SheetView : UserControl {
     protected override void OnTextInput(TextInputEventArgs e) {
         base.OnTextInput(e);
         if (ValidationPopup.IsVisible) return;
+        
         if (_isCommandModifierActive) {
             e.Handled = true;
             return;
@@ -202,7 +204,7 @@ public partial class SheetView : UserControl {
         }
     }
     
-    protected override void OnKeyDown(KeyEventArgs e) {
+    protected override async void OnKeyDown(KeyEventArgs e) {
         base.OnKeyDown(e);
         if (ValidationPopup.IsVisible) return;
         
@@ -213,6 +215,30 @@ public partial class SheetView : UserControl {
                          (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused);
 
         if (!isEditing && !FloatingEditor.IsVisible && DataContext is SheetViewModel vm) {
+             
+             if (_isCommandModifierActive) {
+                 var topLevel = TopLevel.GetTopLevel(this);
+                 if (topLevel?.Clipboard != null) {
+                     if (e.Key == Key.C) {
+                         string text = vm.CopySelection();
+                         await topLevel.Clipboard.SetTextAsync(text);
+                         e.Handled = true;
+                         return;
+                     } 
+                     else if (e.Key == Key.V) {
+                         try {
+                             var text = await topLevel.Clipboard.GetTextAsync();
+                             if (!string.IsNullOrEmpty(text)) {
+                                 vm.PasteData(text);
+                             }
+                         } 
+                         catch {  }
+                         e.Handled = true;
+                         return;
+                     }
+                 }
+             }
+
              int r = _anchorRowIndex;
              int c = _anchorColIndex;
              bool moved = false;
