@@ -68,7 +68,7 @@ public class CellViewModel : ObservableObject {
         }
     }
     
-    public object Value {
+    public object? Value {
         get {
             var val = _model.Value;
             if (val is string str && str.StartsWith("'")) {

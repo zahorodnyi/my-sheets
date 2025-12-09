@@ -25,17 +25,17 @@ public class UndoRedoManager {
 
     public bool CanUndo => _undoStack.Count > 0;
     public bool CanRedo => _redoStack.Count > 0;
-    
+
     public void StartGroup() {
         if (_currentGroup == null) {
             _currentGroup = new CompositeAction();
         }
     }
-    
+
     public void EndGroup() {
         if (_currentGroup != null) {
             var group = _currentGroup;
-            _currentGroup = null; 
+            _currentGroup = null;
             
             if (group.HasActions) {
                 Execute(group);
@@ -66,7 +66,10 @@ public class UndoRedoManager {
 
         _isPerformingAction = true;
         try {
-            var action = _undoStack.Last.Value;
+            var lastNode = _undoStack.Last;
+            if (lastNode == null) return; 
+
+            var action = lastNode.Value;
             _undoStack.RemoveLast();
             action.Undo();
             _redoStack.AddLast(action);
@@ -86,7 +89,10 @@ public class UndoRedoManager {
 
         _isPerformingAction = true;
         try {
-            var action = _redoStack.Last.Value;
+            var lastNode = _redoStack.Last;
+            if (lastNode == null) return; 
+            
+            var action = lastNode.Value;
             _redoStack.RemoveLast();
             action.Execute();
             _undoStack.AddLast(action);

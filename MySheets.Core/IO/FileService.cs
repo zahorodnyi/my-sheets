@@ -85,10 +85,12 @@ public class FileService {
         try {
             if (isExisting) {
                 workbook = new XLWorkbook(path);
-            } else {
+            } 
+            else {
                 workbook = new XLWorkbook();
             }
-        } catch {
+        } 
+        catch {
             workbook = new XLWorkbook();
         }
 
@@ -99,7 +101,8 @@ public class FileService {
             if (workbook.Worksheets.TryGetWorksheet(worksheetName, out var existingSheet)) {
                 worksheet = existingSheet;
                 worksheet.Clear(); 
-            } else {
+            } 
+            else {
                 worksheet = workbook.Worksheets.Add(worksheetName);
             }
 

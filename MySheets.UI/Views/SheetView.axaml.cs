@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using Avalonia.Input.Platform;
 using MySheets.Core.Common;
 using MySheets.UI.ViewModels.SheetEditor;
 using ColumnViewModel = MySheets.UI.ViewModels.SheetEditor.ColumnViewModel;
@@ -59,7 +60,7 @@ public partial class SheetView : UserControl {
         if (_anchorRowIndex != -1 && _anchorColIndex != -1) {
             ActivateFloatingEditor(_anchorRowIndex, _anchorColIndex, vm, setFocus: true);
             
-            if (FloatingEditor.IsVisible && caretOffsetFromEnd > 0) {
+            if (FloatingEditor.IsVisible) {
                 int len = FloatingEditor.Text?.Length ?? 0;
                 FloatingEditor.CaretIndex = Math.Max(0, len - caretOffsetFromEnd);
             }
@@ -231,13 +232,11 @@ public partial class SheetView : UserControl {
                          return;
                      } 
                      else if (e.Key == Key.V) {
-                         try {
-                             var text = await topLevel.Clipboard.GetTextAsync();
-                             if (!string.IsNullOrEmpty(text)) {
-                                 vm.PasteData(text);
-                             }
-                         } 
-                         catch { }
+                         var text = await topLevel.Clipboard.GetTextAsync();
+                         
+                         if (!string.IsNullOrEmpty(text)) {
+                             vm.PasteData(text);
+                         }
                          e.Handled = true;
                          return;
                      }
@@ -336,6 +335,8 @@ public partial class SheetView : UserControl {
     }
 
     private void HandleFormulaRefSelection(TextBox editor, int r, int c, SheetViewModel vm, bool isDrag) {
+        if (editor.Text == null) return; 
+        
         string newRef;
         if (isDrag && (_refAnchorRow != r || _refAnchorCol != c)) {
              string startCol = CellReferenceUtility.GetColumnName(_refAnchorCol);
@@ -349,7 +350,7 @@ public partial class SheetView : UserControl {
         }
 
         var (tokenType, start, length) = GetTokenContext(editor);
-        string currentText = editor.Text ?? "";
+        string currentText = editor.Text; 
         
         if (tokenType == TokenType.Reference) {
              currentText = currentText.Remove(start, length);
