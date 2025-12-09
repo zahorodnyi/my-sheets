@@ -6,7 +6,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
-using Avalonia.Input.Platform;
 using MySheets.Core.Common;
 using MySheets.UI.ViewModels.SheetEditor;
 using ColumnViewModel = MySheets.UI.ViewModels.SheetEditor.ColumnViewModel;
@@ -216,6 +215,12 @@ public partial class SheetView : UserControl {
 
         if (!isEditing && !FloatingEditor.IsVisible && DataContext is SheetViewModel vm) {
              
+             if (e.Key == Key.Delete || e.Key == Key.Back) {
+                 vm.ClearSelectionContent();
+                 e.Handled = true;
+                 return;
+             }
+
              if (_isCommandModifierActive) {
                  var topLevel = TopLevel.GetTopLevel(this);
                  if (topLevel?.Clipboard != null) {
@@ -232,7 +237,7 @@ public partial class SheetView : UserControl {
                                  vm.PasteData(text);
                              }
                          } 
-                         catch {  }
+                         catch { }
                          e.Handled = true;
                          return;
                      }

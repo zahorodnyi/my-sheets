@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text; 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -243,6 +242,29 @@ public partial class SheetViewModel : ObservableObject {
                         
                         cell.SetBorder($"{newL},{newT},{newR},{newB}");
                     }
+                }
+            }
+        }
+        finally {
+            History.EndGroup();
+        }
+    }
+    
+    public void ClearSelectionContent() {
+        int r1 = Math.Min(_anchorRow, _currentRow);
+        int r2 = Math.Max(_anchorRow, _currentRow);
+        int c1 = Math.Min(_anchorCol, _currentCol);
+        int c2 = Math.Max(_anchorCol, _currentCol);
+
+        History.StartGroup();
+        try {
+            for (int r = r1; r <= r2; r++) {
+                if (r >= Rows.Count) continue;
+                var row = Rows[r];
+                for (int c = c1; c <= c2; c++) {
+                    if (c >= row.Cells.Count) continue;
+                    
+                    row.Cells[c].Expression = string.Empty;
                 }
             }
         }
