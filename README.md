@@ -8,7 +8,7 @@ A lightweight, cross-platform spreadsheet application built with .NET 9.0. Desig
 
 ##   Features
 
-- **Modern UI:** Clean and intuitive interface with a dedicated formula bar for easy editing (supports visual area selection and click-to-link cell references etc..).
+- **Modern UI:** Clean and intuitive interface with a dedicated formula bar for easy editing (supports visual area selection, click-to-link cell references etc..).
 - **Smart Formulas:** Supports complex math expressions and cell references (e.g., `=A1+B2`, `=SUM(A1:H7)`).
 - **File Support:** Save and load your spreadsheets in **JSON** and **Excel (.xlsx)** formats.
 - **Instant Updates:** Changing a value automatically recalculates all related cells in real-time.
