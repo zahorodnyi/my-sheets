@@ -4,6 +4,8 @@ using Avalonia.Platform.Storage;
 using MySheets.UI.ViewModels;
 using Avalonia.VisualTree; 
 using System.Linq;
+using Avalonia.Input;
+using System.Globalization;
 
 namespace MySheets.UI.Views;
 
@@ -69,6 +71,25 @@ public partial class MainWindow : Window {
                     sheetView.StartEditing(caretOffsetFromEnd: 1);
                 }
             }
+        }
+    }
+
+    private void OnFontSizeKeyDown(object? sender, KeyEventArgs e) {
+        if (e.Key == Key.Enter) {
+            if (sender is TextBox tb && double.TryParse(tb.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double val)) {
+                if (DataContext is MainWindowViewModel vm) {
+                    vm.CurrentFontSize = val;
+                    tb.Text = val.ToString(CultureInfo.InvariantCulture); 
+                    e.Handled = true;
+                    this.Focus(); 
+                }
+            }
+        }
+    }
+
+    private void OnFontSizeLostFocus(object? sender, RoutedEventArgs e) {
+        if (sender is TextBox tb && DataContext is MainWindowViewModel vm) {
+            tb.Text = vm.CurrentFontSize.ToString(CultureInfo.InvariantCulture);
         }
     }
 }

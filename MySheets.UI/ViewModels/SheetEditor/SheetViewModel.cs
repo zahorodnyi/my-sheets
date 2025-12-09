@@ -117,6 +117,35 @@ public partial class SheetViewModel : ObservableObject {
             }
         }
     }
+
+    public void SetFontSizeForSelection(double newSize) {
+        int r1 = Math.Min(_anchorRow, _currentRow);
+        int r2 = Math.Max(_anchorRow, _currentRow);
+        int c1 = Math.Min(_anchorCol, _currentCol);
+        int c2 = Math.Max(_anchorCol, _currentCol);
+
+        double requiredHeight = newSize * 1.4;
+
+        for (int r = r1; r <= r2; r++) {
+            if (r >= Rows.Count) continue;
+            
+            var row = Rows[r];
+
+            if (row.IsHeightManual) {
+                if (row.Height < requiredHeight) {
+                    row.Height = requiredHeight;
+                }
+            } 
+            else {
+                row.Height = Math.Max(25, requiredHeight);
+            }
+
+            for (int c = c1; c <= c2; c++) {
+                if (c >= row.Cells.Count) continue;
+                row.Cells[c].FontSize = newSize;
+            }
+        }
+    }
     
     public void ApplyBorderSelection(string mode) {
         int r1 = Math.Min(_anchorRow, _currentRow);

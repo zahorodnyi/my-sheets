@@ -505,6 +505,7 @@ public partial class SheetView : UserControl {
             var currentPosition = e.GetPosition(this);
             var delta = currentPosition.Y - _lastMousePosition.Y;
             _targetRow.Height = Math.Max(20, _targetRow.Height + delta);
+            _targetRow.IsHeightManual = true;
             _lastMousePosition = currentPosition;
             UpdateActiveCellVisual(vm);
 

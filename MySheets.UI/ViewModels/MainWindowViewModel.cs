@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using Avalonia.Layout; 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -17,34 +18,24 @@ public partial class MainWindowViewModel : ObservableObject {
     [ObservableProperty] 
     private SheetEditor.SheetViewModel? _activeSheet;
 
+    public double CurrentFontSize {
+        get => ActiveSheet?.SelectedCell?.FontSize ?? 12.0;
+        set {
+            if (ActiveSheet != null) {
+                ActiveSheet.SetFontSizeForSelection(value);
+                OnPropertyChanged();
+            }
+        }
+    }
 
     public List<string> TextColors { get; } = new() {
-        "#000000", // Black
-        "#434343", // Dark Grey
-        "#666666", // Grey
-        "#999999", // Light Grey
-        "#FFFFFF", // White
-        "#CC0000", // Dark Red
-        "#E69138", // Dark Orange
-        "#F1C232", // Dark Yellow
-        "#6AA84F", // Dark Green
-        "#3D85C6", // Dark Cyan/Blue
-        "#073763", // Navy
-        "#674EA7"  // Purple
+        "#000000", "#434343", "#666666", "#999999", "#FFFFFF", "#CC0000", 
+        "#E69138", "#F1C232", "#6AA84F", "#3D85C6", "#073763", "#674EA7"
     };
 
     public List<string> FillColors { get; } = new() {
-        "#FFFFFF", // White
-        "#F3F3F3", // Light Grey
-        "#B7B7B7", // Grey
-        "#F4CCCC", // Pastel Red
-        "#FCE5CD", // Pastel Orange
-        "#FFF2CC", // Pastel Yellow
-        "#D9EAD3", // Pastel Green
-        "#D0E0E3", // Pastel Cyan
-        "#CFE2F3", // Pastel Blue
-        "#D9D2E9", // Pastel Purple
-        "#EAD1DC"  // Pastel Pink
+        "#FFFFFF", "#F3F3F3", "#B7B7B7", "#F4CCCC", "#FCE5CD", "#FFF2CC", 
+        "#D9EAD3", "#D0E0E3", "#CFE2F3", "#D9D2E9", "#EAD1DC"
     };
 
     [ObservableProperty]
@@ -57,6 +48,22 @@ public partial class MainWindowViewModel : ObservableObject {
     public MainWindowViewModel() {
         _fileService = new FileService();
         AddNewSheet();
+    }
+
+    protected override void OnPropertyChanged(PropertyChangedEventArgs e) {
+        base.OnPropertyChanged(e);
+        if (e.PropertyName == nameof(ActiveSheet)) {
+            if (ActiveSheet != null) {
+                ActiveSheet.PropertyChanged += ActiveSheet_PropertyChanged;
+            }
+            OnPropertyChanged(nameof(CurrentFontSize));
+        }
+    }
+
+    private void ActiveSheet_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
+        if (e.PropertyName == nameof(SheetEditor.SheetViewModel.SelectedCell)) {
+            OnPropertyChanged(nameof(CurrentFontSize));
+        }
     }
 
     [RelayCommand]
@@ -95,16 +102,22 @@ public partial class MainWindowViewModel : ObservableObject {
     
     [RelayCommand]
     private void IncreaseFontSize() {
-        ActiveSheet?.ApplyStyleToSelection(cell => {
-             if (cell.FontSize < 72) cell.FontSize += 1;
-        });
+        if (ActiveSheet != null) {
+            double current = CurrentFontSize;
+            if (current < 72) {
+                CurrentFontSize = current + 1;
+            }
+        }
     }
     
     [RelayCommand]
     private void DecreaseFontSize() {
-        ActiveSheet?.ApplyStyleToSelection(cell => {
-             if (cell.FontSize > 6) cell.FontSize -= 1;
-        });
+        if (ActiveSheet != null) {
+            double current = CurrentFontSize;
+            if (current > 6) {
+                CurrentFontSize = current - 1;
+            }
+        }
     }
     
     [RelayCommand]
