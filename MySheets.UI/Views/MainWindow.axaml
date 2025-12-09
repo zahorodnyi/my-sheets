@@ -282,7 +282,26 @@
                         <Button Classes="tool" 
                                 Width="28" Height="28" Padding="0"
                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                ToolTip.Tip="Borders" Command="{Binding ToggleBordersCommand}">
+                                ToolTip.Tip="Borders">
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuItem Header="Clear Borders" Command="{Binding ApplyBorderCommand}" CommandParameter="None">
+                                        <MenuItem.Icon>
+                                            <Rectangle Width="12" Height="12" Stroke="#999999" StrokeThickness="1" RadiusX="1" RadiusY="1" StrokeDashArray="2,2" Fill="Transparent"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="All Borders" Command="{Binding ApplyBorderCommand}" CommandParameter="All">
+                                        <MenuItem.Icon>
+                                            <PathIcon Data="M3,3H21V21H3V3M5,5V11H11V5H5M13,5V11H19V5H13M5,13V19H11V13H5M13,13V19H19V13H13" Width="12" Height="12"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                    <MenuItem Header="Outside Borders" Command="{Binding ApplyBorderCommand}" CommandParameter="Outside">
+                                        <MenuItem.Icon>
+                                            <PathIcon Data="M3,3H21V21H3V3M5,5V19H19V5H5" Width="12" Height="12"/>
+                                        </MenuItem.Icon>
+                                    </MenuItem>
+                                </MenuFlyout>
+                            </Button.Flyout>
                             <PathIcon Data="M3,3V21H21V3H3M5,5H11V11H5V5M5,13H11V19H5V13M13,5H19V11H13V5M13,13H19V19H13V13Z" 
                                       Width="16" Height="16" Foreground="#444444"/>
                         </Button>

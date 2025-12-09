@@ -89,8 +89,15 @@ public class CellViewModel : ObservableObject {
     public IBrush Foreground => Brush.Parse(_model.TextColor);
     
     public IBrush Background => Brush.Parse(_model.BackgroundColor);
-    
-    public Thickness BorderThickness => Thickness.Parse(_model.BorderThickness);
+
+    public Thickness BorderThickness {
+        get {
+            if (_model.BorderThickness == "0,0,1,1") {
+                return new Thickness(0);
+            }
+            return Thickness.Parse(_model.BorderThickness);
+        }
+    }
     
     public HorizontalAlignment CellAlignment {
         get {

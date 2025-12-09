@@ -96,10 +96,8 @@ public partial class SheetViewModel : ObservableObject {
 
     public void UpdateSelection(int row, int col) {
         if (row < 0 || col < 0) return;
-        
         _currentRow = row;
         _currentCol = col;
-
         UpdateSelectionGeometry(row, col);
         UpdateAddressText();
     }
@@ -113,12 +111,63 @@ public partial class SheetViewModel : ObservableObject {
         for (int r = r1; r <= r2; r++) {
             if (r >= Rows.Count) continue;
             var row = Rows[r];
-            
             for (int c = c1; c <= c2; c++) {
                 if (c >= row.Cells.Count) continue;
                 applyAction(row.Cells[c]);
             }
         }
+    }
+    
+    public void ApplyBorderSelection(string mode) {
+        int r1 = Math.Min(_anchorRow, _currentRow);
+        int r2 = Math.Max(_anchorRow, _currentRow);
+        int c1 = Math.Min(_anchorCol, _currentCol);
+        int c2 = Math.Max(_anchorCol, _currentCol);
+
+        for (int r = r1; r <= r2; r++) {
+            if (r >= Rows.Count) continue;
+            var row = Rows[r];
+            
+            for (int c = c1; c <= c2; c++) {
+                if (c >= row.Cells.Count) continue;
+                var cell = row.Cells[c];
+
+                if (mode == "None") {
+                    cell.SetBorder("0,0,1,1");
+                }
+                else if (mode == "All") {
+                    int left = (c == c1) ? 1 : 0;
+                    int top = (r == r1) ? 1 : 0;
+                    
+                    cell.SetBorder($"{left},{top},1.00,1.00");
+                }
+                else if (mode == "Outside") {
+                    bool isLeftEdge = (c == c1);
+                    bool isTopEdge = (r == r1);
+                    bool isRightEdge = (c == c2);
+                    bool isBottomEdge = (r == r2);
+
+                    if (!isLeftEdge && !isTopEdge && !isRightEdge && !isBottomEdge) continue;
+
+                    var (curL, curT, curR, curB) = GetCurrentBorderValues(cell);
+
+                    string newL = isLeftEdge ? "1" : (curL > 0 ? "1.00" : "0");
+                    string newT = isTopEdge ? "1" : (curT > 0 ? "1.00" : "0");
+                    string newR = isRightEdge ? "1.00" : (curR > 0 ? "1.00" : "0"); 
+                    string newB = isBottomEdge ? "1.00" : (curB > 0 ? "1.00" : "0");
+                    
+                    cell.SetBorder($"{newL},{newT},{newR},{newB}");
+                }
+            }
+        }
+    }
+
+    private (int, int, int, int) GetCurrentBorderValues(CellViewModel vm) {
+        var parts = vm.BorderThickness.ToString().Split(',');
+        if (parts.Length == 4) {
+            return ((int)vm.BorderThickness.Left, (int)vm.BorderThickness.Top, (int)vm.BorderThickness.Right, (int)vm.BorderThickness.Bottom);
+        }
+        return (0, 0, 1, 1);
     }
 
     private void UpdateAddressText() {

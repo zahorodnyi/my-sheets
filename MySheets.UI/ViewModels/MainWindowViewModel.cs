@@ -159,6 +159,11 @@ public partial class MainWindowViewModel : ObservableObject {
             cell.SetBackgroundColor("Transparent");
         });
     }
+    
+    [RelayCommand]
+    private void ApplyBorder(string type) {
+        ActiveSheet?.ApplyBorderSelection(type);
+    }
 
     [RelayCommand]
     private void ToggleBorders() {
