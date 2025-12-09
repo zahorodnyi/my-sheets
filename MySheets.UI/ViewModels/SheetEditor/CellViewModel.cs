@@ -40,7 +40,6 @@ public class CellViewModel : ObservableObject {
                 var oldValue = _model.Expression;
                 var newValue = value;
                 
-                // Record action
                 _parentVm.History.Execute(new CellEditAction(
                     oldValue, 
                     newValue, 
@@ -49,7 +48,6 @@ public class CellViewModel : ObservableObject {
                         OnPropertyChanged(nameof(Expression));
                     }));
 
-                // Apply immediately
                 _sheet.SetCell(_model.Row, _model.Col, newValue);
                 OnPropertyChanged();
             }

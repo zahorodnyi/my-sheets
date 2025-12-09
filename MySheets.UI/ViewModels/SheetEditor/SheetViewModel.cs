@@ -66,7 +66,7 @@ public partial class SheetViewModel : ObservableObject {
     public SheetViewModel(string name) {
         Name = name;
         Worksheet = new Worksheet();
-        History = new UndoRedoManager(10); 
+        History = new UndoRedoManager(17); 
         
         ColumnHeaders = new ObservableCollection<ColumnViewModel>();
         Rows = new ObservableCollection<RowViewModel>();

@@ -157,7 +157,7 @@
                     Padding="20" MinWidth="300" BoxShadow="0 4 10 0 #40000000">
                 <StackPanel Spacing="15">
                     <TextBlock Text="⚠️ Invalid Formula" FontWeight="Bold" FontSize="16" Foreground="#D93025"/>
-                    <TextBlock Text="It looks like your formula is invalid. Please try changing it." 
+                    <TextBlock Text="It looks as though your formula has an error. If you don't want to enter a formula, begin your text with an apostrophe (')." 
                                TextWrapping="Wrap" FontSize="14" Foreground="#333333"/>
                     <Button Content="OK" HorizontalAlignment="Right" Click="OnValidationOkClick"
                             Background="#1A73E8" Foreground="White" Padding="15,6" CornerRadius="4"/>
