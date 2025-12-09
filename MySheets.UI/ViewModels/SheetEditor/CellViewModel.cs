@@ -4,16 +4,19 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MySheets.Core.Domain;
+using MySheets.Core.Common;
 
 namespace MySheets.UI.ViewModels.SheetEditor;
 
 public class CellViewModel : ObservableObject {
     private readonly Cell _model;
     private readonly Worksheet _sheet;
+    private readonly SheetViewModel _parentVm;
 
-    public CellViewModel(Cell model, Worksheet sheet, ColumnViewModel column) {
+    public CellViewModel(Cell model, Worksheet sheet, ColumnViewModel column, SheetViewModel parentVm) {
         _model = model;
         _sheet = sheet;
+        _parentVm = parentVm;
         Column = column;
         _sheet.CellStateChanged += OnCellStateChanged;
     }
@@ -34,7 +37,20 @@ public class CellViewModel : ObservableObject {
         get => _model.Expression;
         set {
             if (_model.Expression != value) {
-                _sheet.SetCell(_model.Row, _model.Col, value);
+                var oldValue = _model.Expression;
+                var newValue = value;
+                
+                // Record action
+                _parentVm.History.Execute(new CellEditAction(
+                    oldValue, 
+                    newValue, 
+                    val => {
+                        _sheet.SetCell(_model.Row, _model.Col, val);
+                        OnPropertyChanged(nameof(Expression));
+                    }));
+
+                // Apply immediately
+                _sheet.SetCell(_model.Row, _model.Col, newValue);
                 OnPropertyChanged();
             }
         }
@@ -44,6 +60,10 @@ public class CellViewModel : ObservableObject {
         get => _model.FontSize;
         set {
             if (Math.Abs(_model.FontSize - value) > 0.01) {
+                CaptureStyleChange(_model.FontSize, value, v => {
+                    _model.FontSize = v;
+                    OnPropertyChanged(nameof(FontSize));
+                });
                 _model.FontSize = value;
                 OnPropertyChanged();
             }
@@ -64,6 +84,11 @@ public class CellViewModel : ObservableObject {
         get => _model.IsBold;
         set {
             if (_model.IsBold != value) {
+                CaptureStyleChange(_model.IsBold, value, v => {
+                    _model.IsBold = v;
+                    OnPropertyChanged(nameof(IsBold));
+                    OnPropertyChanged(nameof(FontWeight));
+                });
                 _model.IsBold = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(FontWeight)); 
@@ -77,6 +102,11 @@ public class CellViewModel : ObservableObject {
         get => _model.IsItalic;
         set {
             if (_model.IsItalic != value) {
+                CaptureStyleChange(_model.IsItalic, value, v => {
+                    _model.IsItalic = v;
+                    OnPropertyChanged(nameof(IsItalic));
+                    OnPropertyChanged(nameof(FontStyle));
+                });
                 _model.IsItalic = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(FontStyle)); 
@@ -110,6 +140,10 @@ public class CellViewModel : ObservableObject {
         set {
             string newVal = value.ToString();
             if (_model.TextAlignment != newVal) {
+                CaptureStyleChange(_model.TextAlignment, newVal, v => {
+                    _model.TextAlignment = v;
+                    OnPropertyChanged(nameof(CellAlignment));
+                });
                 _model.TextAlignment = newVal;
                 OnPropertyChanged();
             }
@@ -118,6 +152,10 @@ public class CellViewModel : ObservableObject {
     
     public void SetTextColor(string colorHex) {
         if (_model.TextColor != colorHex) {
+            CaptureStyleChange(_model.TextColor, colorHex, v => {
+                _model.TextColor = v;
+                OnPropertyChanged(nameof(Foreground));
+            });
             _model.TextColor = colorHex;
             OnPropertyChanged(nameof(Foreground));
         }
@@ -125,6 +163,10 @@ public class CellViewModel : ObservableObject {
 
     public void SetBackgroundColor(string colorHex) {
         if (_model.BackgroundColor != colorHex) {
+            CaptureStyleChange(_model.BackgroundColor, colorHex, v => {
+                _model.BackgroundColor = v;
+                OnPropertyChanged(nameof(Background));
+            });
             _model.BackgroundColor = colorHex;
             OnPropertyChanged(nameof(Background));
         }
@@ -132,9 +174,17 @@ public class CellViewModel : ObservableObject {
 
     public void SetBorder(string thickness) {
         if (_model.BorderThickness != thickness) {
+            CaptureStyleChange(_model.BorderThickness, thickness, v => {
+                _model.BorderThickness = v;
+                OnPropertyChanged(nameof(BorderThickness));
+            });
             _model.BorderThickness = thickness;
             OnPropertyChanged(nameof(BorderThickness));
         }
+    }
+
+    private void CaptureStyleChange<T>(T oldVal, T newVal, Action<T> apply) {
+        _parentVm.History.Execute(new CellStyleAction<T>(oldVal, newVal, apply));
     }
     
     public void Refresh() {

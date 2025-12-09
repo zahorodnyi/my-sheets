@@ -20,6 +20,8 @@ public partial class SheetView : UserControl {
     private bool _isSelecting;
     private bool _isSyncingText;
     
+    private bool _isCommandModifierActive;
+    
     private Point _lastMousePosition;
     private ColumnViewModel? _targetColumn;
     private RowViewModel? _targetRow;
@@ -165,10 +167,20 @@ public partial class SheetView : UserControl {
         return null;
     }
 
+    protected override void OnKeyUp(KeyEventArgs e) {
+        base.OnKeyUp(e);
+        _isCommandModifierActive = (e.KeyModifiers & KeyModifiers.Control) != 0 || 
+                                   (e.KeyModifiers & KeyModifiers.Meta) != 0;
+    }
+
     protected override void OnTextInput(TextInputEventArgs e) {
         base.OnTextInput(e);
         if (ValidationPopup.IsVisible) return;
-        
+        if (_isCommandModifierActive) {
+            e.Handled = true;
+            return;
+        }
+
         if (DataContext is SheetViewModel vm && vm.IsRefSelectionVisible) {
              vm.HideRefSelection();
         }
@@ -193,6 +205,9 @@ public partial class SheetView : UserControl {
     protected override void OnKeyDown(KeyEventArgs e) {
         base.OnKeyDown(e);
         if (ValidationPopup.IsVisible) return;
+        
+        _isCommandModifierActive = (e.KeyModifiers & KeyModifiers.Control) != 0 || 
+                                   (e.KeyModifiers & KeyModifiers.Meta) != 0;
         
         bool isEditing = (FloatingEditor.IsVisible && FloatingEditor.IsFocused) || 
                          (MainWindow.GlobalFormulaBar != null && MainWindow.GlobalFormulaBar.IsFocused);

@@ -10,6 +10,8 @@ namespace MySheets.UI.ViewModels.SheetEditor;
 
 public partial class SheetViewModel : ObservableObject {
     public Worksheet Worksheet { get; }
+    public UndoRedoManager History { get; }
+
     private int _anchorRow;
     private int _anchorCol;
     private int _currentRow;
@@ -41,6 +43,8 @@ public partial class SheetViewModel : ObservableObject {
     public SheetViewModel(string name) {
         Name = name;
         Worksheet = new Worksheet();
+        History = new UndoRedoManager(10); 
+        
         ColumnHeaders = new ObservableCollection<ColumnViewModel>();
         Rows = new ObservableCollection<RowViewModel>();
 
@@ -55,13 +59,26 @@ public partial class SheetViewModel : ObservableObject {
             var rowCells = new List<CellViewModel>();
             for (var c = 0; c < ColCount; c++) {
                 var cellModel = Worksheet.GetCell(r, c);
-                rowCells.Add(new CellViewModel(cellModel, Worksheet, ColumnHeaders[c]));
+                rowCells.Add(new CellViewModel(cellModel, Worksheet, ColumnHeaders[c], this));
             }
             Rows.Add(new RowViewModel(rowCells, r + 1));
         }
 
         Worksheet.CellStateChanged += OnCellStateChanged;
+        History.StateChanged += (s, e) => {
+            UndoCommand.NotifyCanExecuteChanged();
+            RedoCommand.NotifyCanExecuteChanged();
+        };
     }
+
+    [RelayCommand(CanExecute = nameof(CanUndo))]
+    public void Undo() => History.Undo();
+
+    [RelayCommand(CanExecute = nameof(CanRedo))]
+    public void Redo() => History.Redo();
+
+    private bool CanUndo() => History.CanUndo;
+    private bool CanRedo() => History.CanRedo;
 
     private void OnCellStateChanged(int row, int col) {
         if (row < Rows.Count && col < Rows[row].Cells.Count) {
@@ -108,13 +125,20 @@ public partial class SheetViewModel : ObservableObject {
         int c1 = Math.Min(_anchorCol, _currentCol);
         int c2 = Math.Max(_anchorCol, _currentCol);
 
-        for (int r = r1; r <= r2; r++) {
-            if (r >= Rows.Count) continue;
-            var row = Rows[r];
-            for (int c = c1; c <= c2; c++) {
-                if (c >= row.Cells.Count) continue;
-                applyAction(row.Cells[c]);
+        History.StartGroup();
+
+        try {
+            for (int r = r1; r <= r2; r++) {
+                if (r >= Rows.Count) continue;
+                var row = Rows[r];
+                for (int c = c1; c <= c2; c++) {
+                    if (c >= row.Cells.Count) continue;
+                    applyAction(row.Cells[c]);
+                }
             }
+        }
+        finally {
+            History.EndGroup();
         }
     }
 
@@ -126,24 +150,30 @@ public partial class SheetViewModel : ObservableObject {
 
         double requiredHeight = newSize * 1.4;
 
-        for (int r = r1; r <= r2; r++) {
-            if (r >= Rows.Count) continue;
-            
-            var row = Rows[r];
+        History.StartGroup();
+        try {
+            for (int r = r1; r <= r2; r++) {
+                if (r >= Rows.Count) continue;
+                
+                var row = Rows[r];
 
-            if (row.IsHeightManual) {
-                if (row.Height < requiredHeight) {
-                    row.Height = requiredHeight;
+                if (row.IsHeightManual) {
+                    if (row.Height < requiredHeight) {
+                        row.Height = requiredHeight;
+                    }
+                } 
+                else {
+                    row.Height = Math.Max(25, requiredHeight);
                 }
-            } 
-            else {
-                row.Height = Math.Max(25, requiredHeight);
-            }
 
-            for (int c = c1; c <= c2; c++) {
-                if (c >= row.Cells.Count) continue;
-                row.Cells[c].FontSize = newSize;
+                for (int c = c1; c <= c2; c++) {
+                    if (c >= row.Cells.Count) continue;
+                    row.Cells[c].FontSize = newSize;
+                }
             }
+        }
+        finally {
+            History.EndGroup();
         }
     }
     
@@ -153,41 +183,47 @@ public partial class SheetViewModel : ObservableObject {
         int c1 = Math.Min(_anchorCol, _currentCol);
         int c2 = Math.Max(_anchorCol, _currentCol);
 
-        for (int r = r1; r <= r2; r++) {
-            if (r >= Rows.Count) continue;
-            var row = Rows[r];
-            
-            for (int c = c1; c <= c2; c++) {
-                if (c >= row.Cells.Count) continue;
-                var cell = row.Cells[c];
+        History.StartGroup();
+        try {
+            for (int r = r1; r <= r2; r++) {
+                if (r >= Rows.Count) continue;
+                var row = Rows[r];
+                
+                for (int c = c1; c <= c2; c++) {
+                    if (c >= row.Cells.Count) continue;
+                    var cell = row.Cells[c];
 
-                if (mode == "None") {
-                    cell.SetBorder("0,0,1,1");
-                }
-                else if (mode == "All") {
-                    int left = (c == c1) ? 1 : 0;
-                    int top = (r == r1) ? 1 : 0;
-                    
-                    cell.SetBorder($"{left},{top},1.00,1.00");
-                }
-                else if (mode == "Outside") {
-                    bool isLeftEdge = (c == c1);
-                    bool isTopEdge = (r == r1);
-                    bool isRightEdge = (c == c2);
-                    bool isBottomEdge = (r == r2);
+                    if (mode == "None") {
+                        cell.SetBorder("0,0,1,1");
+                    }
+                    else if (mode == "All") {
+                        int left = (c == c1) ? 1 : 0;
+                        int top = (r == r1) ? 1 : 0;
+                        
+                        cell.SetBorder($"{left},{top},1.00,1.00");
+                    }
+                    else if (mode == "Outside") {
+                        bool isLeftEdge = (c == c1);
+                        bool isTopEdge = (r == r1);
+                        bool isRightEdge = (c == c2);
+                        bool isBottomEdge = (r == r2);
 
-                    if (!isLeftEdge && !isTopEdge && !isRightEdge && !isBottomEdge) continue;
+                        if (!isLeftEdge && !isTopEdge && !isRightEdge && !isBottomEdge) continue;
 
-                    var (curL, curT, curR, curB) = GetCurrentBorderValues(cell);
+                        var (curL, curT, curR, curB) = GetCurrentBorderValues(cell);
 
-                    string newL = isLeftEdge ? "1" : (curL > 0 ? "1.00" : "0");
-                    string newT = isTopEdge ? "1" : (curT > 0 ? "1.00" : "0");
-                    string newR = isRightEdge ? "1.00" : (curR > 0 ? "1.00" : "0"); 
-                    string newB = isBottomEdge ? "1.00" : (curB > 0 ? "1.00" : "0");
-                    
-                    cell.SetBorder($"{newL},{newT},{newR},{newB}");
+                        string newL = isLeftEdge ? "1" : (curL > 0 ? "1.00" : "0");
+                        string newT = isTopEdge ? "1" : (curT > 0 ? "1.00" : "0");
+                        string newR = isRightEdge ? "1.00" : (curR > 0 ? "1.00" : "0"); 
+                        string newB = isBottomEdge ? "1.00" : (curB > 0 ? "1.00" : "0");
+                        
+                        cell.SetBorder($"{newL},{newT},{newR},{newB}");
+                    }
                 }
             }
+        }
+        finally {
+            History.EndGroup();
         }
     }
 
@@ -269,13 +305,15 @@ public partial class SheetViewModel : ObservableObject {
 
     [RelayCommand]
     public void AddRow() {
+        History.StartGroup();
         int rowIndex = Rows.Count;
         var rowCells = new List<CellViewModel>();
         for (int c = 0; c < ColumnHeaders.Count; c++) {
             var cellModel = Worksheet.GetCell(rowIndex, c);
-            rowCells.Add(new CellViewModel(cellModel, Worksheet, ColumnHeaders[c]));
+            rowCells.Add(new CellViewModel(cellModel, Worksheet, ColumnHeaders[c], this));
         }
         Rows.Add(new RowViewModel(rowCells, rowIndex + 1));
+        History.EndGroup();
     }
 
     [RelayCommand]
@@ -285,13 +323,15 @@ public partial class SheetViewModel : ObservableObject {
 
     [RelayCommand]
     public void AddColumn() {
+        History.StartGroup();
         int colIndex = ColumnHeaders.Count;
         var newColumn = new ColumnViewModel(MainWindowViewModel.GetColumnName(colIndex));
         ColumnHeaders.Add(newColumn);
         for (int r = 0; r < Rows.Count; r++) {
             var cellModel = Worksheet.GetCell(r, colIndex);
-            Rows[r].Cells.Add(new CellViewModel(cellModel, Worksheet, newColumn));
+            Rows[r].Cells.Add(new CellViewModel(cellModel, Worksheet, newColumn, this));
         }
+        History.EndGroup();
     }
 
     [RelayCommand]

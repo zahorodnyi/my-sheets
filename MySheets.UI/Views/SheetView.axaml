@@ -11,6 +11,13 @@
              PointerReleased="OnPointerReleased"
              PointerMoved="OnPointerMoved">
 
+    <UserControl.KeyBindings>
+        <KeyBinding Gesture="Ctrl+Z" Command="{Binding UndoCommand}"/>
+        <KeyBinding Gesture="Cmd+Z" Command="{Binding UndoCommand}"/>
+        <KeyBinding Gesture="Ctrl+Y" Command="{Binding RedoCommand}"/>
+        <KeyBinding Gesture="Cmd+Y" Command="{Binding RedoCommand}"/>
+    </UserControl.KeyBindings>
+
     <UserControl.Styles>
         <Style Selector="Border.header">
             <Setter Property="Background" Value="#F8F9FA"/>
