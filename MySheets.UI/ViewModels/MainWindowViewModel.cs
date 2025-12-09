@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using Avalonia.Layout; 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MySheets.Core.IO;
+using MySheets.Core.Domain;
 
 namespace MySheets.UI.ViewModels;
 
@@ -188,29 +190,76 @@ public partial class MainWindowViewModel : ObservableObject {
 
     [RelayCommand]
     private void SetAlignment(string alignmentStr) {
-        if (Enum.TryParse<HorizontalAlignment>(alignmentStr, true, out var align)) {
+        if (Enum.TryParse<Avalonia.Layout.HorizontalAlignment>(alignmentStr, true, out var align)) {
             ActiveSheet?.ApplyStyleToSelection(cell => {
                 cell.CellAlignment = align;
             });
         }
     }
 
+    [RelayCommand]
+    public void SaveCurrentSheet() {
+        if (ActiveSheet != null && !string.IsNullOrEmpty(ActiveSheet.FilePath)) {
+            SaveData(ActiveSheet.FilePath);
+        }
+    }
+
     public void SaveData(string path) {
         if (ActiveSheet == null) return;
-        _fileService.Save(path, ActiveSheet.Worksheet.Cells);
+        
+        var rowHeights = new Dictionary<int, double>();
+        for (int i = 0; i < ActiveSheet.Rows.Count; i++) {
+            rowHeights[i] = ActiveSheet.Rows[i].Height;
+        }
+
+        var colWidths = new Dictionary<int, double>();
+        for (int i = 0; i < ActiveSheet.ColumnHeaders.Count; i++) {
+            colWidths[i] = ActiveSheet.ColumnHeaders[i].Width;
+        }
+
+        _fileService.Save(path, ActiveSheet.Worksheet.Cells, rowHeights, colWidths);
+        
+        ActiveSheet.FilePath = path;
         ActiveSheet.Name = System.IO.Path.GetFileNameWithoutExtension(path);
     }
 
     public void LoadData(string path) {
-        var data = _fileService.Load(path);
+        var sheetDto = _fileService.Load(path);
         
         var fileName = System.IO.Path.GetFileNameWithoutExtension(path);
         var newSheet = new SheetEditor.SheetViewModel(fileName);
         
-        foreach (var cellDto in data) {
+        foreach (var cellDto in sheetDto.Cells) {
+            var cell = newSheet.Worksheet.GetCell(cellDto.Row, cellDto.Col);
+            
             newSheet.Worksheet.SetCell(cellDto.Row, cellDto.Col, cellDto.Expression);
+            
+            cell.FontSize = cellDto.FontSize;
+            cell.IsBold = cellDto.IsBold;
+            cell.IsItalic = cellDto.IsItalic;
+            cell.TextColor = cellDto.TextColor;
+            cell.BackgroundColor = cellDto.BackgroundColor;
+            cell.BorderThickness = cellDto.BorderThickness;
+            cell.TextAlignment = cellDto.TextAlignment;
+            
+            var cellVm = newSheet.Rows[cellDto.Row].Cells[cellDto.Col];
+            cellVm.Refresh();
         }
 
+        foreach (var kvp in sheetDto.RowHeights) {
+            if (kvp.Key < newSheet.Rows.Count) {
+                newSheet.Rows[kvp.Key].Height = kvp.Value;
+                newSheet.Rows[kvp.Key].IsHeightManual = true;
+            }
+        }
+
+        foreach (var kvp in sheetDto.ColumnWidths) {
+            if (kvp.Key < newSheet.ColumnHeaders.Count) {
+                newSheet.ColumnHeaders[kvp.Key].Width = kvp.Value;
+            }
+        }
+
+        newSheet.FilePath = path;
         Sheets.Add(newSheet);
         ActiveSheet = newSheet;
     }

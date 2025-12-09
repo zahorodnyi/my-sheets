@@ -40,21 +40,36 @@ public partial class MainWindow : Window {
     }
 
     private async void OnSaveFileClick(object? sender, RoutedEventArgs e) {
+        await SaveFileAs();
+    }
+
+    private async void OnSaveClick(object? sender, RoutedEventArgs e) {
+        if (DataContext is MainWindowViewModel vm) {
+            if (vm.ActiveSheet != null && !string.IsNullOrEmpty(vm.ActiveSheet.FilePath)) {
+                vm.SaveCurrentSheetCommand.Execute(null);
+            } 
+            else {
+                await SaveFileAs();
+            }
+        }
+    }
+
+    private async System.Threading.Tasks.Task SaveFileAs() {
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null) return;
 
         var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions {
             Title = "Save Spreadsheet",
             DefaultExtension = "json",
-            SuggestedFileName = "Sheet1",
+            SuggestedFileName = DataContext is MainWindowViewModel vm && vm.ActiveSheet != null ? vm.ActiveSheet.Name : "Sheet1",
             FileTypeChoices = new[] {
                 new FilePickerFileType("JSON Files") { Patterns = new[] { "*.json" } },
                 new FilePickerFileType("Excel Workbook") { Patterns = new[] { "*.xlsx" } }
             }
         });
 
-        if (file != null && DataContext is MainWindowViewModel vm) {
-            vm.SaveData(file.Path.LocalPath);
+        if (file != null && DataContext is MainWindowViewModel vm2) {
+            vm2.SaveData(file.Path.LocalPath);
         }
     }
 

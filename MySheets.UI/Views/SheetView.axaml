@@ -97,12 +97,10 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="sheetEditor:CellViewModel">
                                         <Panel Width="{Binding Column.Width}">
-                                            <!-- Шар 1: Базова сітка -->
                                             <Border BorderBrush="#D0D0D0" 
                                                     BorderThickness="0,0,1,1" 
                                                     Background="{Binding Background}"/>
                                             
-                                            <!-- Шар 2: Активні кордони -->
                                             <Border BorderBrush="Black" 
                                                     BorderThickness="{Binding BorderThickness}">
                                                 <Panel ClipToBounds="False">

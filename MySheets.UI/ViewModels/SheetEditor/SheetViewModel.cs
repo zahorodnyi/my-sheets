@@ -41,6 +41,7 @@ public partial class SheetViewModel : ObservableObject {
     private int _currentCol;
 
     [ObservableProperty] private string _name;
+    [ObservableProperty] private string? _filePath;
     
     [ObservableProperty] private double _selectionX;
     [ObservableProperty] private double _selectionY;
@@ -66,7 +67,7 @@ public partial class SheetViewModel : ObservableObject {
     public SheetViewModel(string name) {
         Name = name;
         Worksheet = new Worksheet();
-        History = new UndoRedoManager(17); 
+        History = new UndoRedoManager(10); 
         
         ColumnHeaders = new ObservableCollection<ColumnViewModel>();
         Rows = new ObservableCollection<RowViewModel>();

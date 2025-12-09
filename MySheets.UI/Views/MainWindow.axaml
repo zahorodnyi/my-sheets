@@ -141,6 +141,7 @@
                                 <MenuItem Header="New" Command="{Binding AddNewSheetCommand}"/>
                                 <Separator/>
                                 <MenuItem Header="Open..." Click="OnOpenFileClick"/>
+                                <MenuItem Header="Save" Click="OnSaveClick"/>
                                 <MenuItem Header="Save As..." Click="OnSaveFileClick"/>
                             </MenuFlyout>
                         </Button.Flyout>
